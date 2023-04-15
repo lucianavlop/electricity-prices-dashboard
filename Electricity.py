@@ -13,7 +13,7 @@ def format_euro(amount) -> str:
     return f'{format_decimal(amount, locale="en_GB", format="#,##0.000")}'
 
 
-PRICES_API = 'https://elec.daithiapp.com/api/v1/price'
+PRICES_API = 'https://elec-api.daithiapp.com/api/v1/price'
 
 
 class Price:
