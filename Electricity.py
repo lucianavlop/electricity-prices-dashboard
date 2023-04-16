@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import requests
 import pandas as pd
@@ -6,14 +7,20 @@ from babel.numbers import format_decimal
 from datetime import date, datetime, timedelta
 from dateutil.parser import parse
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PRICES_API = os.getenv('PRICES_API')
+
+if PRICES_API is None or PRICES_API == '':
+    raise Exception('Please provide the PRICES_API environment variable')
+
 st.set_page_config(layout="wide")
 
 
 def format_euro(amount) -> str:
     return f'{format_decimal(amount, locale="en_GB", format="#,##0.000")}'
-
-
-PRICES_API = 'https://elec-api.daithiapp.com/api/v1/price'
 
 
 class Price:
