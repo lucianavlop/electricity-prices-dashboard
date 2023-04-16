@@ -1,7 +1,4 @@
 babel
 streamlit
 python-dotenv
-asyncio
-meross_iot==0.4.5.9
-python-i18n[YAML]
 python-dateutil
