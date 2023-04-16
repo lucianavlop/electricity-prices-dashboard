@@ -7,7 +7,7 @@ st.set_page_config(layout="wide")
 
 # get data
 # price_data_v1=get_prices()
-st.title('Electricity prices')
+st.title('Precios de la electricidad')
 
 start_date_average = date.today() - timedelta(days=30)
 elecAverage = round(calculate_average(
@@ -15,10 +15,10 @@ elecAverage = round(calculate_average(
 currentPrice = round(get_current_price(get_today()).value, 2)
 difElec = round(currentPrice - elecAverage, 2)
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Average Price (30 days)", elecAverage, delta_color="inverse")
-col2.metric("Current Price", currentPrice, difElec, delta_color="inverse")
-labelminhour = "Min Price at " + get_min_price(get_today()).hour + ":00"
-labelmaxhour = "Max Price at " + get_max_price(get_today()).hour + ":00"
+col1.metric("Precio Promedio (30 días)", elecAverage, delta_color="inverse")
+col2.metric("Precio actual", currentPrice, difElec, delta_color="inverse")
+labelminhour = "Precio min a las " + get_min_price(get_today()).hour + ":00"
+labelmaxhour = "Precio max a las " + get_max_price(get_today()).hour + ":00"
 
 minToday = round(get_min_price(get_today()).value, 2)
 difElecMin = round(minToday - elecAverage, 2)
@@ -32,9 +32,9 @@ col4.metric(labelmaxhour, maxToday, difElecMax, delta_color="inverse")
 
 if get_tomorrow():
     st.write('TOMORROW')
-    labelminhourT = "Min Price at " + \
+    labelminhourT = "Precio min a las " + \
         get_min_price(get_tomorrow()).hour + ":00"
-    labelmaxhourT = "Max Price at " + \
+    labelmaxhourT = "Precio max a las " + \
         get_max_price(get_tomorrow()).hour + ":00"
 
     col1, col2, col3 = st.columns(3)
@@ -43,10 +43,10 @@ if get_tomorrow():
     col3.metric(labelmaxhourT, round(get_max_price(
         get_tomorrow()).value, 2), delta_color="inverse")
 else:
-    st.subheader("Tomorrow's prices are not available yet")
+    st.subheader("Los precios de mañana aún no están disponibles.")
 
 
-st.header("Last 30 days evolutions")
+st.header("Últimos 30 días")
 # Plot timeline
 ago_days = 30
 i = 0
@@ -65,7 +65,7 @@ for x in range(ago_days, 0, -1):
 
 df = pd.DataFrame({
     'date': date_arr,
-    'Average electricity prices': avg_arr
+    'Precios medios de electricidad': avg_arr
 })
 
 df = df.rename(columns={'date': 'index'}).set_index('index')
