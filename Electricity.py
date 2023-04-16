@@ -43,7 +43,7 @@ if get_tomorrow():
     col3.metric(labelmaxhourT, round(get_max_price(
         get_tomorrow()).value, 2), delta_color="inverse")
 else:
-    st.subheader("Los precios de mañana aún no están disponibles.")
+    st.subheader("Los precios de mañana aún no están disponibles")
 
 
 st.header("Últimos 30 días")
