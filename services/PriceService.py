@@ -1,4 +1,5 @@
 import os
+import logging
 import requests
 import json
 from babel.numbers import format_decimal
@@ -8,7 +9,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 PRICES_API = os.getenv('PRICES_API')
+VARIANCE = 0.02
+
 
 if PRICES_API is None or PRICES_API == '':
     raise Exception('Please provide the PRICES_API environment variable')
@@ -37,6 +41,13 @@ def get_prices(start: date, end: date) -> list[Price]:
 def get_current_price(prices: list[Price]) -> Price:
     now = datetime.now()
     hour = now.strftime('%H')
+    # r=(x for x in prices if x.datetime.strftime('%H') == hour)
+    # print(next(r).value_euro)
+    return next((x for x in prices if x.datetime.strftime('%H') == hour), None)
+
+def get_price_hour(prices: list[Price], hour: int) -> Price:
+    now = datetime.now()
+    # print(next(x for x in prices ).hour)
     return next((x for x in prices if x.datetime.strftime('%H') == hour), None)
 
 
@@ -100,3 +111,30 @@ def calculate_average(prices: list[Price]) -> float:
 
 def format_euro(amount) -> str:
     return f'{format_decimal(amount, locale="en_GB", format="#,##0.000")}'
+
+# lucia´s approach at classifiying the days
+def get_date_health (date: date, globalAverage: float) -> str:
+        range = 0.02
+        average_date=calculate_average(get_prices(date, date))  
+        lowLine= globalAverage-range
+        highLine= globalAverage + range
+        
+        if (average_date<lowLine):
+            return 'BUENO'
+        elif (average_date>=lowLine or average_date<=highLine):
+            return 'NORMAL'
+        else:
+            return 'MALO'
+
+#Daithi´s approach
+def calculate_day_rating(cheapest_period_avg: float) -> str:
+    recent_average = get_cheap_period_recent_average(30)
+    logging.info(
+        f'Recent average: {recent_average} - Tomorrow: {cheapest_period_avg}')
+
+    if (recent_average - cheapest_period_avg) > VARIANCE:
+        return "BUENO"
+    elif (recent_average - cheapest_period_avg) < -VARIANCE:
+        return "MALO"
+    else:
+        return "NORMAL"
