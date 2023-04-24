@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 import json
-from babel.numbers import format_decimal
+from babel.numbers import format_currency
 from datetime import date, datetime, timedelta
 from dateutil.parser import parse
 from dotenv import load_dotenv
@@ -110,14 +110,13 @@ def calculate_average(prices: list[Price]) -> float:
 
 
 def format_euro(amount) -> str:
-    return f'{format_decimal(amount, locale="en_GB", format="#,##0.000")}'
+    return f'{format_currency(amount, "EUR", locale="es_ES")}'
 
 # lucia´s approach at classifiying the days
 def get_date_health (date: date, globalAverage: float) -> str:
-        range = 0.02
         average_date=calculate_average(get_prices(date, date))  
-        lowLine= globalAverage-range
-        highLine= globalAverage + range
+        lowLine= globalAverage-VARIANCE
+        highLine= globalAverage + VARIANCE
         
         if (average_date<lowLine):
             return 'BUENO'
@@ -129,8 +128,6 @@ def get_date_health (date: date, globalAverage: float) -> str:
 #Daithi´s approach
 def calculate_day_rating(cheapest_period_avg: float) -> str:
     recent_average = get_cheap_period_recent_average(30)
-    logging.info(
-        f'Recent average: {recent_average} - Tomorrow: {cheapest_period_avg}')
 
     if (recent_average - cheapest_period_avg) > VARIANCE:
         return "BUENO"
