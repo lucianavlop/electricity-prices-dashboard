@@ -33,3 +33,4 @@ jobs:
           tags: |
             daithihearn/electricity-prices-dashboard:latest
             daithihearn/electricity-prices-dashboard:${{ github.ref_name }}
+          output: "type=registry,ref=$IMAGE_NAME:${{ github.sha }},name=manifest"
