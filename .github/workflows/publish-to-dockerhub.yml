@@ -19,6 +19,8 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
