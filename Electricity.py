@@ -14,6 +14,8 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
 today=datetime.today()
+logging.info('Access to dashboard ' + datetime.now().strftime("%H:%M"))
+
 tomorrow_date= today + timedelta(days=1)
 start_date_average = today - timedelta(days=30)
 hours_day = 24 -1
@@ -23,11 +25,8 @@ elecAverage = round(calculate_average(
 cheapest_period = get_cheapest_period(get_today(), 3)
 cheapest_period_today_avg = calculate_average(cheapest_period)
 
-cheapest_period_tom= get_cheapest_period(get_tomorrow(), 3)
-cheapest_period_tom_avg = calculate_average(cheapest_period_tom)
 
 todays_health=calculate_day_rating(cheapest_period_today_avg)
-tomorrow_health=calculate_day_rating(cheapest_period_tom_avg)
 
 
 # title
@@ -43,19 +42,20 @@ today_prices=get_today()
 currentPrice = round(get_current_price(today_prices).value, 2)
 difElec = round(currentPrice - elecAverage, 2)
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Precio Promedio (30 días)", elecAverage, delta_color="inverse")
-col2.metric("Precio actual - " + datetime.now().strftime("%H:%M"), currentPrice, difElec, delta_color="inverse")
+col1.metric("Precio Promedio (30 días)", format_euro(elecAverage), delta_color="inverse")
+col2.metric("Precio actual - " + datetime.now().strftime("%H:%M"), format_euro(currentPrice),  format_euro(difElec), delta_color="inverse")
+
 labelminhour = "Precio min - " + get_min_price(get_today()).hour + ":00"
 labelmaxhour = "Precio max - " + get_max_price(get_today()).hour + ":00"
 
-minToday = round(get_min_price(today_prices).value, 2)
-difElecMin = round(minToday - elecAverage, 2)
+minToday = get_min_price(today_prices).value
+difElecMin = minToday - elecAverage
 
-maxToday = round(get_max_price(today_prices).value, 2)
-difElecMax = round(maxToday - elecAverage, 2)
+maxToday = get_max_price(today_prices).value
+difElecMax = maxToday - elecAverage
 
-col3.metric(labelminhour, minToday, difElecMin, delta_color="inverse")
-col4.metric(labelmaxhour, maxToday, difElecMax, delta_color="inverse")
+col3.metric(labelminhour, format_euro(minToday),  format_euro(difElecMin), delta_color="inverse")
+col4.metric(labelmaxhour, format_euro(maxToday),  format_euro(difElecMax), delta_color="inverse")
 
 
 # Plot timeline today
@@ -85,18 +85,30 @@ chart = st.line_chart(plotToday)#, line_width=3.0, color='blue')
 
 #Tomorrow's prices
 if get_tomorrow():
+    #get day rating
+    cheapest_period_tom= get_cheapest_period(get_tomorrow(), 3)
+    cheapest_period_tom_avg = calculate_average(cheapest_period_tom)
+    tomorrow_health=calculate_day_rating(cheapest_period_tom_avg)
+
+
     st.subheader('Mañana ' + tomorrow_date.strftime('%d/%m') + ' es un día ' + tomorrow_health
              )
     labelminhourT = "Precio min - " + \
         get_min_price(get_tomorrow()).hour + ":00"
     labelmaxhourT = "Precio max - " + \
         get_max_price(get_tomorrow()).hour + ":00"
+    
+    minTomorrow = get_min_price(
+        get_tomorrow()).value
+    difElecMinT = minTomorrow - elecAverage
+
+    maxTomorrow= get_max_price(today_prices).value
+    difElecMaxT = maxTomorrow - elecAverage
+
 
     col1, col2, col3, col4 = st.columns(4)
-    col3.metric(labelminhourT, round(get_min_price(
-        get_tomorrow()).value, 2), delta_color="inverse")
-    col4.metric(labelmaxhourT, round(get_max_price(
-        get_tomorrow()).value, 2), delta_color="inverse")
+    col3.metric(labelminhourT,  format_euro(minTomorrow) , format_euro(difElecMinT), delta_color="inverse")
+    col4.metric(labelmaxhourT,  format_euro(maxTomorrow), format_euro(difElecMaxT), delta_color="inverse")
     
 
     # Plot timeline tomorrow
