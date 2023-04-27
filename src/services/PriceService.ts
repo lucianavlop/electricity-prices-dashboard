@@ -80,10 +80,6 @@ export const calculateRating = (prices: Price[], median: number): DayRating => {
     const lowLine = median - VARIANCE
     const highLine = median + VARIANCE
 
-    console.log(
-        `Current median: ${currMedian} median: ${median} lowLine: ${lowLine} highLine: ${highLine}`,
-    )
-
     if (currMedian < lowLine) {
         return "BUENO"
     } else if (currMedian >= lowLine && currMedian <= highLine) {
