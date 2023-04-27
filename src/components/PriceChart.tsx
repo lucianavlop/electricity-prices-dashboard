@@ -1,12 +1,31 @@
-import React, { useEffect, useMemo } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
     getCheapestPeriod,
     getMostExpensivePeriod,
 } from "services/PriceService"
 import { format, isSameHour } from "date-fns"
-import Chart, { ChartData, ChartOptions } from "chart.js/auto"
+import {
+    Chart,
+    ChartData,
+    ChartOptions,
+    LineController,
+    LinearScale,
+    PointElement,
+    LineElement,
+    CategoryScale,
+} from "chart.js"
+import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
+
+Chart.register(
+    LineController,
+    LinearScale,
+    CategoryScale,
+    PointElement,
+    LineElement,
+    Annotation,
+)
 
 export const ID_PREFIX = "daily-chart-"
 
@@ -38,12 +57,60 @@ const DailyChart: React.FC<DailyChartProps> = ({
     showExpensivePeriod,
 }) => {
     const theme = useTheme()
+    const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
 
     let chart: Chart | undefined
 
+    useEffect(() => {
+        if (!showCurrentPrice || prices.length <= 1) return
+        // Function to be executed every minute
+        const updateData = () => {
+            if (!showCurrentPrice || prices.length <= 1) return
+            const canvasWidth = prices.length
+            const startTime = new Date(prices[0].dateTime).getTime()
+            const endTime = new Date(
+                prices[prices.length - 1].dateTime,
+            ).getTime()
+            const currentTime = new Date().getTime()
+
+            if (currentTime < startTime || currentTime > endTime)
+                return setCurrentPriceLocation(-1)
+
+            setCurrentPriceLocation(
+                ((currentTime - startTime) / (endTime - startTime)) *
+                    canvasWidth,
+            )
+        }
+
+        // Run the function on component load
+        updateData()
+
+        // Set the interval to run the function every minute
+        const intervalId = setInterval(updateData, 10 * 60 * 1000)
+
+        // Cleanup function to clear the interval when the component is unmounted
+        return () => {
+            clearInterval(intervalId)
+        }
+    }, [prices, showCurrentPrice])
+
     const chartOptions = useMemo(() => {
+        // const currentTime = format(new Date(), dateFormat)
         const chartOptions: ChartOptions = {
             plugins: {
+                annotation: {
+                    annotations: [
+                        {
+                            type: "line",
+                            xScaleID: "x",
+                            xMin: currentPriceLocation, // The x-axis value where the vertical line should be drawn
+                            xMax: currentPriceLocation,
+                            borderColor: theme.palette.secondary.main,
+                            borderWidth: 4,
+                            display: currentPriceLocation !== -1,
+                        } as LineAnnotationOptions,
+                    ],
+                },
                 tooltip: {
                     callbacks: {
                         label: (context: any) => {
@@ -109,7 +176,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
             },
         }
         return chartOptions
-    }, [theme])
+    }, [currentPriceLocation, theme])
 
     const cheapPeriod = useMemo(() => {
         if (!showCheapPeriod) return Array<null>(prices.length).fill(null)
@@ -151,24 +218,6 @@ const DailyChart: React.FC<DailyChartProps> = ({
         })
     }, [prices, showExpensivePeriod])
 
-    const currentPriceDataset = useMemo(() => {
-        if (!showCurrentPrice) return Array<null>(prices.length).fill(null)
-        const today = new Date()
-        const nextHour = new Date()
-        nextHour.setHours(nextHour.getHours() + 1)
-        return prices.map(item => {
-            // If the dateTime of item is contained in cp, return the price, else return null
-            if (
-                isSameHour(new Date(item.dateTime), today) ||
-                isSameHour(new Date(item.dateTime), nextHour)
-            ) {
-                return item.price
-            } else {
-                return null
-            }
-        })
-    }, [prices, showCurrentPrice])
-
     const averageDataset = useMemo(
         () => Array<number>(prices.length).fill(median),
         [prices, median],
@@ -180,22 +229,6 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 format(new Date(item.dateTime), dateFormat),
             ),
             datasets: [
-                {
-                    label: "Hide",
-                    data: currentPriceDataset,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.6),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: currentPriceDataset,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.6),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
                 {
                     label: "Hide",
                     data: cheapPeriod,
@@ -250,7 +283,6 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [
         averageDataset,
         cheapPeriod,
-        currentPriceDataset,
         dateFormat,
         expensivePeriod,
         prices,
@@ -279,7 +311,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 chart.destroy()
             }
         }
-    }, [chartData])
+    }, [chartData, chartOptions, chartId])
 
     return <canvas id={ID_PREFIX + chartId} />
 }
