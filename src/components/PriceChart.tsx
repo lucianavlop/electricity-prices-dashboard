@@ -148,7 +148,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [prices, showExpensivePeriod])
 
     const currentPriceDataset = useMemo(() => {
-        if (!showExpensivePeriod) return Array<null>(prices.length).fill(null)
+        if (!showCurrentPrice) return Array<null>(prices.length).fill(null)
         const today = new Date()
         const nextHour = new Date()
         nextHour.setHours(nextHour.getHours() + 1)
@@ -163,7 +163,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 return null
             }
         })
-    }, [prices, showExpensivePeriod])
+    }, [prices, showCurrentPrice])
 
     const averageDataset = useMemo(
         () => Array<number>(prices.length).fill(median),
@@ -195,7 +195,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 {
                     label: "Hide",
                     data: cheapPeriod,
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.4),
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "start",
                     pointRadius: 0,
@@ -203,7 +203,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 {
                     label: "Hide",
                     data: cheapPeriod,
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.4),
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "end",
                     pointRadius: 0,
@@ -211,7 +211,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 {
                     label: "Hide",
                     data: expensivePeriod,
-                    backgroundColor: hexToRGBA(theme.palette.warning.main, 0.4),
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
                     showLine: false,
                     fill: "start",
                     pointRadius: 0,
@@ -219,7 +219,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 {
                     label: "Hide",
                     data: expensivePeriod,
-                    backgroundColor: hexToRGBA(theme.palette.warning.main, 0.4),
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
                     showLine: false,
                     fill: "end",
                     pointRadius: 0,
@@ -227,8 +227,8 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 {
                     label: "Precio",
                     data: prices.map(item => item.price),
-                    borderColor: theme.palette.primary.main,
-                    backgroundColor: hexToRGBA(theme.palette.primary.main, 0.4),
+                    borderColor: theme.palette.info.main,
+                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
                     pointRadius: 0,
                 },
                 {
@@ -250,11 +250,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         dateFormat,
         expensivePeriod,
         prices,
-        theme.palette.info.main,
-        theme.palette.primary.main,
-        theme.palette.secondary.main,
-        theme.palette.success.main,
-        theme.palette.warning.main,
+        theme,
     ])
 
     useEffect(() => {
