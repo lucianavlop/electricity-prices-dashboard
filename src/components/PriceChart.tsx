@@ -148,7 +148,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [prices, showExpensivePeriod])
 
     const currentPriceDataset = useMemo(() => {
-        if (!showExpensivePeriod) return Array<null>(prices.length).fill(null)
+        if (!showCurrentPrice) return Array<null>(prices.length).fill(null)
         const today = new Date()
         const nextHour = new Date()
         nextHour.setHours(nextHour.getHours() + 1)
@@ -163,7 +163,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 return null
             }
         })
-    }, [prices, showExpensivePeriod])
+    }, [prices, showCurrentPrice])
 
     const averageDataset = useMemo(
         () => Array<number>(prices.length).fill(median),
