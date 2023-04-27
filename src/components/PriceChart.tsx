@@ -111,10 +111,16 @@ const DailyChart: React.FC<DailyChartProps> = ({
         if (!showCheapPeriod) return Array<null>(prices.length).fill(null)
 
         const cp = getCheapestPeriod(prices, 3)
-        return prices.map(item => {
+        return prices.map(p => {
+            const priceHour = new Date(p.dateTime).getHours()
             // If the dateTime of item is contained in cp, return the price, else return null
-            if (cp.find(cpItem => cpItem.dateTime === item.dateTime)) {
-                return item.price
+            if (
+                cp.find(cpItem => {
+                    const cpHour = new Date(cpItem.dateTime).getHours()
+                    return cpHour === priceHour || cpHour + 1 === priceHour
+                })
+            ) {
+                return p.price
             } else {
                 return null
             }
@@ -125,10 +131,16 @@ const DailyChart: React.FC<DailyChartProps> = ({
         if (!showExpensivePeriod) return Array<null>(prices.length).fill(null)
 
         const ep = getMostExpensivePeriod(prices, 3)
-        return prices.map(item => {
+        return prices.map(p => {
+            const priceHour = new Date(p.dateTime).getHours()
             // If the dateTime of item is contained in ep, return the price, else return null
-            if (ep.find(epItem => epItem.dateTime === item.dateTime)) {
-                return item.price
+            if (
+                ep.find(epItem => {
+                    const cpHour = new Date(epItem.dateTime).getHours()
+                    return cpHour === priceHour || cpHour + 1 === priceHour
+                })
+            ) {
+                return p.price
             } else {
                 return null
             }
