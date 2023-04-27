@@ -2,9 +2,9 @@
 A simple dashboard to display the PVPC electricity prices in Spain.
 
 ## Stack
-- Python3
-- Streamlit
-- Docker
+- ReactJS
+- Material-UI
+- Nginx
 
 ## API
 Requires an instances on this [API](https://github.com/daithihearn/electricity-prices)

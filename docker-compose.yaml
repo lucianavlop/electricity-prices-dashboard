@@ -1,0 +1,16 @@
+version: "3.5"
+
+services:
+    daithi-dashboard:
+        image: daithi-dashboard
+        container_name: daithi-dashboard
+        restart: "no"
+        ports:
+            - 3000:80
+        networks:
+            - dash
+
+networks:
+    dash:
+        driver: bridge
+        name: dash

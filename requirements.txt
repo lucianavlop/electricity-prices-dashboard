@@ -1,4 +1,0 @@
-babel
-streamlit
-python-dotenv
-python-dateutil
