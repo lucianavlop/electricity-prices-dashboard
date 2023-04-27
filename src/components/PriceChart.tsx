@@ -250,11 +250,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         dateFormat,
         expensivePeriod,
         prices,
-        theme.palette.info.main,
-        theme.palette.primary.main,
-        theme.palette.secondary.main,
-        theme.palette.success.main,
-        theme.palette.warning.main,
+        theme,
     ])
 
     useEffect(() => {

@@ -152,7 +152,7 @@ const DashboardContent: React.FC = () => {
             }}>
             <Paper
                 sx={{
-                    p: 2,
+                    p: 1,
                     display: "flex",
                     flexDirection: "column",
                 }}>
