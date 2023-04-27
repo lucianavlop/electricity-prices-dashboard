@@ -1,16 +1,16 @@
 version: "3.5"
 
 services:
-    daithi-dashboard:
-        image: daithi-dashboard
-        container_name: daithi-dashboard
-        restart: "no"
+    electricity-prices-dashboard:
+        image: electricity-prices-dashboard
+        container_name: electricity-prices-dashboard
+        restart: always
         ports:
             - 3000:80
         networks:
-            - dash
+            - elec-prices
 
 networks:
-    dash:
+    elec-prices:
         driver: bridge
-        name: dash
+        name: elec-prices

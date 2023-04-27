@@ -13,7 +13,7 @@ import {
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 
-function DashboardContent() {
+const DashboardContent: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [pricesToday, setPricesToday] = useState<Price[]>([])
     const [pricesTomorrow, setPricesTomorrow] = useState<Price[] | null>(null)
