@@ -351,7 +351,7 @@ const DashboardContent: React.FC = () => {
                         prices={dailyMedians}
                         median={median}
                         chartId="DailyMedians"
-                        dateFormat="yyyy-MM-dd"
+                        dateFormat="MMM dd"
                         showCurrentPrice={false}
                         showCheapPeriod={false}
                         showExpensivePeriod={false}

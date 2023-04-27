@@ -58,13 +58,14 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     },
                 },
                 legend: {
+                    position: "bottom",
                     labels: {
                         filter: item => {
                             return item.text !== "Hide" // Hide the label for 'Dataset 2'
                         },
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
@@ -89,16 +90,19 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     ticks: {
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: theme.palette.divider,
+                    },
                     ticks: {
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
