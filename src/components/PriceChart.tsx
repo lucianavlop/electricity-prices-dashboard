@@ -105,7 +105,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
             },
         }
         return chartOptions
-    }, [theme, chartId])
+    }, [theme])
 
     const cheapPeriod = useMemo(() => {
         if (!showCheapPeriod) return Array<null>(prices.length).fill(null)
@@ -151,14 +151,15 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 return null
             }
         })
-    }, [prices, showCurrentPrice])
+    }, [prices, showExpensivePeriod])
 
-    const averageDataset = useMemo(() => {
-        return Array<number>(prices.length).fill(median)
-    }, [prices, median])
+    const averageDataset = useMemo(
+        () => Array<number>(prices.length).fill(median),
+        [prices, median],
+    )
 
-    useEffect(() => {
-        const chartData: ChartData<"line", (number | null)[]> = {
+    const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
+        return {
             labels: prices.map(item =>
                 format(new Date(item.dateTime), dateFormat),
             ),
@@ -230,7 +231,21 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
             ],
         }
+    }, [
+        averageDataset,
+        cheapPeriod,
+        currentPriceDataset,
+        dateFormat,
+        expensivePeriod,
+        prices,
+        theme.palette.info.main,
+        theme.palette.primary.main,
+        theme.palette.secondary.main,
+        theme.palette.success.main,
+        theme.palette.warning.main,
+    ])
 
+    useEffect(() => {
         const chartCanvas = document.getElementById(
             ID_PREFIX + chartId,
         ) as HTMLCanvasElement
@@ -252,7 +267,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 chart.destroy()
             }
         }
-    }, [theme, prices, cheapPeriod])
+    }, [chartData])
 
     return <canvas id={ID_PREFIX + chartId} />
 }
