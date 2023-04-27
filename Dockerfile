@@ -1,14 +1,23 @@
-FROM python:3.11.3
+# build
+FROM node:14 AS builder
 
-# Set the working directory to /app
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt /app
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+COPY package.json ./
 
-# Copy source code
-COPY . /app
+RUN yarn --network-timeout 100000
 
-# Run the app
-CMD ["streamlit", "run", "Electricity.py"]
+COPY ./src ./src
+COPY ./public ./public
+COPY ./tsconfig.json tsconfig.json
+
+RUN yarn build
+
+# deployment
+FROM nginx:1.19-alpine AS deployment
+
+COPY --from=builder /app/build /usr/share/nginx/html
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+
+CMD nginx -g 'daemon off;'
