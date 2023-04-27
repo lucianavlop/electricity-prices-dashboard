@@ -3,29 +3,13 @@ import {
     getCheapestPeriod,
     getMostExpensivePeriod,
 } from "services/PriceService"
-import { format, isSameHour } from "date-fns"
-import {
-    Chart,
-    ChartData,
-    ChartOptions,
-    LineController,
-    LinearScale,
-    PointElement,
-    LineElement,
-    CategoryScale,
-} from "chart.js"
+import { format } from "date-fns"
+import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
 
-Chart.register(
-    LineController,
-    LinearScale,
-    CategoryScale,
-    PointElement,
-    LineElement,
-    Annotation,
-)
+Chart.register(Annotation)
 
 export const ID_PREFIX = "daily-chart-"
 
