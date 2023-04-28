@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
     getCheapestPeriod,
     getMostExpensivePeriod,
@@ -42,8 +42,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
 }) => {
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
-
-    let chart: Chart | undefined
+    const chartRef = useRef<Chart | null>(null)
 
     useEffect(() => {
         if (!showCurrentPrice || prices.length <= 1) return
@@ -282,11 +281,11 @@ const DailyChart: React.FC<DailyChartProps> = ({
         ) as HTMLCanvasElement
 
         if (chartCanvas) {
-            if (chart) {
-                chart.destroy()
+            if (chartRef.current) {
+                chartRef.current.destroy()
             }
 
-            chart = new Chart(chartCanvas, {
+            chartRef.current = new Chart(chartCanvas, {
                 type: "line",
                 data: chartData,
                 options: chartOptions,
@@ -294,8 +293,8 @@ const DailyChart: React.FC<DailyChartProps> = ({
         }
 
         return () => {
-            if (chart) {
-                chart.destroy()
+            if (chartRef.current) {
+                chartRef.current.destroy()
             }
         }
     }, [chartData, chartOptions, chartId])
