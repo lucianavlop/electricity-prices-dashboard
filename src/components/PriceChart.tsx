@@ -50,7 +50,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         // Function to be executed every minute
         const updateData = () => {
             if (!showCurrentPrice || prices.length <= 1) return
-            const canvasWidth = prices.length
+            const canvasWidth = prices.length - 1
             const startTime = new Date(prices[0].dateTime).getTime()
             const endTime = new Date(
                 prices[prices.length - 1].dateTime,
