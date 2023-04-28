@@ -181,12 +181,6 @@ const DashboardContent: React.FC = () => {
                 <Container sx={{ p: 2 }}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label="Precio Promedio (30 días)"
-                                value={median}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
                             {currentPrice ? (
                                 <Metric
                                     label={`Precio actual - ${format(
@@ -232,6 +226,12 @@ const DashboardContent: React.FC = () => {
                                     median -
                                     (maxPriceToday ? maxPriceToday.price : 0)
                                 }
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Metric
+                                label="Precio Promedio (30 días)"
+                                value={median}
                             />
                         </Grid>
                     </Grid>
