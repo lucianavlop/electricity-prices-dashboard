@@ -89,7 +89,10 @@ const DailyChart: React.FC<DailyChartProps> = ({
                             xScaleID: "x",
                             xMin: currentPriceLocation, // The x-axis value where the vertical line should be drawn
                             xMax: currentPriceLocation,
-                            borderColor: theme.palette.secondary.main,
+                            borderColor:
+                                theme.palette.mode === "dark"
+                                    ? theme.palette.grey[300]
+                                    : theme.palette.grey[800],
                             borderWidth: 4,
                             display: currentPriceLocation !== -1,
                         } as LineAnnotationOptions,
