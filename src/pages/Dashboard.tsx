@@ -22,6 +22,7 @@ const DashboardContent: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             const prices = await getPrices(currentDate, currentDate)
+            prices.push(prices[prices.length - 1])
             setPricesToday(prices)
         }
         fetchData()
@@ -35,6 +36,7 @@ const DashboardContent: React.FC = () => {
             const prices = await getPrices(tomorrow, tomorrow)
 
             if (prices.length > 0) setPricesTomorrow(prices)
+            else setPricesTomorrow(null)
         }
         fetchData()
     }, [currentDate])
