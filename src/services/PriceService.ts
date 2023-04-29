@@ -25,6 +25,8 @@ export const getPrices = async (start: Date, end: Date): Promise<Price[]> => {
 }
 
 export const getCheapestPeriod = (prices: Price[], n: number): Price[] => {
+    if (prices.length < 1) return []
+
     const prices_sorted = prices.sort(
         (a, b) =>
             new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
@@ -50,6 +52,8 @@ export const getTwoCheapestPeriods = (
     prices: Price[],
     n: number,
 ): Price[][] => {
+    if (prices.length < 1) return [[], []]
+
     let firstPeriod = getCheapestPeriod(prices, n)
 
     // Get the remaining prices before the first period
@@ -103,6 +107,8 @@ export const getTwoCheapestPeriods = (
 }
 
 export const getMostExpensivePeriod = (prices: Price[], n: number): Price[] => {
+    if (prices.length < 1) return []
+
     const prices_sorted = prices.sort(
         (a, b) =>
             new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
