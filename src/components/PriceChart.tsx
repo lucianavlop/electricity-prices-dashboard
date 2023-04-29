@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
-    getCheapestPeriod,
     getMostExpensivePeriod,
+    getTwoCheapestPeriods,
 } from "services/PriceService"
 import { format } from "date-fns"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
@@ -29,6 +29,23 @@ export interface DailyChartProps {
     showCurrentPrice: boolean
     showCheapPeriod: boolean
     showExpensivePeriod: boolean
+}
+
+const padPrices = (prices: Price[], cp: Price[]): (number | null)[] => {
+    return prices.map(p => {
+        const priceHour = new Date(p.dateTime).getHours()
+        // If the dateTime of item is contained in cp, return the price, else return null
+        if (
+            cp.find(cpItem => {
+                const cpHour = new Date(cpItem.dateTime).getHours()
+                return cpHour === priceHour || cpHour + 1 === priceHour
+            })
+        ) {
+            return p.price
+        } else {
+            return null
+        }
+    })
 }
 
 const DailyChart: React.FC<DailyChartProps> = ({
@@ -139,6 +156,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 x: {
                     grid: {
                         display: false, // Set this to false to remove vertical grid lines
+                        // color: theme.palette.divider,
                     },
                     ticks: {
                         color:
@@ -164,24 +182,30 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return chartOptions
     }, [currentPriceLocation, theme])
 
-    const cheapPeriod = useMemo(() => {
-        if (!showCheapPeriod) return Array<null>(prices.length).fill(null)
+    const cheapPeriods = useMemo(() => {
+        if (!showCheapPeriod || prices.length <= 1)
+            return [
+                Array<null>(prices.length).fill(null),
+                Array<null>(prices.length).fill(null),
+            ]
 
-        const cp = getCheapestPeriod(prices, 3)
-        return prices.map(p => {
-            const priceHour = new Date(p.dateTime).getHours()
-            // If the dateTime of item is contained in cp, return the price, else return null
-            if (
-                cp.find(cpItem => {
-                    const cpHour = new Date(cpItem.dateTime).getHours()
-                    return cpHour === priceHour || cpHour + 1 === priceHour
-                })
-            ) {
-                return p.price
-            } else {
-                return null
-            }
-        })
+        const cp = getTwoCheapestPeriods(prices, 3)
+
+        if (cp[0].length === 0)
+            return [
+                Array<null>(prices.length).fill(null),
+                Array<null>(prices.length).fill(null),
+            ]
+
+        // If the second period is after the first period, show both periods
+        if (
+            new Date(cp[1][0].dateTime).getTime() >
+            new Date(cp[0][1].dateTime).getTime()
+        ) {
+            return [padPrices(prices, cp[0]), padPrices(prices, cp[1])]
+        }
+
+        return [padPrices(prices, cp[0]), Array<null>(prices.length).fill(null)]
     }, [prices, showCheapPeriod])
 
     const expensivePeriod = useMemo(() => {
@@ -217,7 +241,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
             datasets: [
                 {
                     label: "Hide",
-                    data: cheapPeriod,
+                    data: cheapPeriods[0],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "start",
@@ -225,7 +249,23 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: cheapPeriod,
+                    data: cheapPeriods[0],
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: cheapPeriods[1],
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: cheapPeriods[1],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "end",
@@ -255,7 +295,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     pointRadius: 0,
                 },
                 {
-                    label: "Media",
+                    label: "Precio Promedio (30 días)",
                     data: averageDataset,
                     borderColor: theme.palette.secondary.main,
                     backgroundColor: hexToRGBA(
@@ -268,7 +308,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         }
     }, [
         averageDataset,
-        cheapPeriod,
+        cheapPeriods,
         dateFormat,
         expensivePeriod,
         prices,

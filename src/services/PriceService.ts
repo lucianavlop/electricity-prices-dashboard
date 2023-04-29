@@ -46,6 +46,62 @@ export const getCheapestPeriod = (prices: Price[], n: number): Price[] => {
     return min_window
 }
 
+export const getTwoCheapestPeriods = (
+    prices: Price[],
+    n: number,
+): Price[][] => {
+    let firstPeriod = getCheapestPeriod(prices, n)
+
+    // Get the remaining prices before the first period
+    const remainingPricesBefore = prices.filter(
+        p =>
+            new Date(p.dateTime).getTime() <
+            new Date(firstPeriod[0].dateTime).getTime(),
+    )
+
+    // Get the remaining prices after the first period
+    const remainingPricesAfter = prices.filter(
+        p =>
+            new Date(p.dateTime).getTime() >
+            new Date(firstPeriod[firstPeriod.length - 1].dateTime).getTime(),
+    )
+
+    // Get the cheapest period from the remaining prices before the first period
+    const firstPeriodBefore = getCheapestPeriod(remainingPricesBefore, n)
+
+    // Get the cheapest period from the remaining prices after the first period
+    const firstPeriodAfter = getCheapestPeriod(remainingPricesAfter, n)
+
+    let secondPeriod: Price[] = []
+
+    if (firstPeriodBefore.length < 3 && firstPeriodAfter.length >= 3) {
+        secondPeriod = firstPeriodAfter
+    } else if (firstPeriodBefore.length >= 3 && firstPeriodAfter.length < 3) {
+        secondPeriod = firstPeriodBefore
+    } else if (firstPeriodBefore.length >= 3 && firstPeriodAfter.length >= 3) {
+        // Find period with lowest average price
+        const firstPeriodBeforeAverage = calculateAverage(firstPeriodBefore)
+        const firstPeriodAfterAverage = calculateAverage(firstPeriodAfter)
+
+        if (firstPeriodBeforeAverage < firstPeriodAfterAverage) {
+            secondPeriod = firstPeriodBefore
+        } else {
+            secondPeriod = firstPeriodAfter
+        }
+    }
+
+    // If the period has passed return and empty array
+    if (new Date(firstPeriod[0].dateTime).getTime() < new Date().getTime()) {
+        firstPeriod = []
+    }
+
+    if (new Date(secondPeriod[0].dateTime).getTime() < new Date().getTime()) {
+        secondPeriod = []
+    }
+
+    return [firstPeriod, secondPeriod]
+}
+
 export const getMostExpensivePeriod = (prices: Price[], n: number): Price[] => {
     const prices_sorted = prices.sort(
         (a, b) =>
@@ -63,6 +119,11 @@ export const getMostExpensivePeriod = (prices: Price[], n: number): Price[] => {
             max_sum = window_sum
             max_window = prices_sorted.slice(i, i + n)
         }
+    }
+
+    // If the period has passed return and empty array
+    if (new Date(max_window[0].dateTime).getTime() < new Date().getTime()) {
+        max_window = []
     }
 
     return max_window
