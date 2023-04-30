@@ -139,8 +139,12 @@ export const getMostExpensivePeriod = (prices: Price[], n: number): Price[] => {
     }
 
     // If the period has passed return and empty array
-    if (new Date(max_window[0].dateTime).getTime() < new Date().getTime()) {
-        max_window = []
+    const now = new Date().getTime()
+    const endOfPeriod = new Date(max_window[max_window.length - 1].dateTime)
+    endOfPeriod.setMinutes(59)
+
+    if (endOfPeriod.getTime() < now) {
+        return []
     }
 
     return max_window
