@@ -95,11 +95,22 @@ export const getTwoCheapestPeriods = (
     }
 
     // If the period has passed return and empty array
-    if (new Date(firstPeriod[0].dateTime).getTime() < new Date().getTime()) {
+    const now = new Date().getTime()
+    const endOfFirstPeriod = new Date(
+        firstPeriod[firstPeriod.length - 1].dateTime,
+    )
+    endOfFirstPeriod.setMinutes(59)
+
+    if (endOfFirstPeriod.getTime() < now) {
         firstPeriod = []
     }
 
-    if (new Date(secondPeriod[0].dateTime).getTime() < new Date().getTime()) {
+    const endOfSecondPeriod = new Date(
+        secondPeriod[secondPeriod.length - 1].dateTime,
+    )
+    endOfSecondPeriod.setMinutes(59)
+
+    if (endOfSecondPeriod.getDate() < now) {
         secondPeriod = []
     }
 
