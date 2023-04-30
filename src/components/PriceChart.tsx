@@ -191,7 +191,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
 
         const cp = getTwoCheapestPeriods(prices, 3)
 
-        if (cp[0].length === 0)
+        if (cp[0].length === 0 || cp[1].length === 0)
             return [
                 Array<null>(prices.length).fill(null),
                 Array<null>(prices.length).fill(null),
