@@ -110,7 +110,7 @@ export const getTwoCheapestPeriods = (
     )
     endOfSecondPeriod.setMinutes(59)
 
-    if (endOfSecondPeriod.getDate() < now) {
+    if (endOfSecondPeriod.getTime() < now) {
         secondPeriod = []
     }
 

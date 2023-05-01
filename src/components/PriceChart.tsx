@@ -201,7 +201,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         if (
             cp[1].length > 0 &&
             new Date(cp[1][0].dateTime).getTime() >
-                new Date(cp[0][1].dateTime).getTime()
+                new Date(cp[0][0].dateTime).getTime()
         ) {
             return [padPrices(prices, cp[0]), padPrices(prices, cp[1])]
         }
