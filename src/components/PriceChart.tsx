@@ -191,22 +191,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
 
         const cp = getTwoCheapestPeriods(prices, 3)
 
-        if (cp[0].length === 0)
-            return [
-                Array<null>(prices.length).fill(null),
-                Array<null>(prices.length).fill(null),
-            ]
-
-        // If the second period is after the first period, show both periods
-        if (
-            cp[1].length > 0 &&
-            new Date(cp[1][0].dateTime).getTime() >
-                new Date(cp[0][0].dateTime).getTime()
-        ) {
-            return [padPrices(prices, cp[0]), padPrices(prices, cp[1])]
-        }
-
-        return [padPrices(prices, cp[0]), Array<null>(prices.length).fill(null)]
+        return [padPrices(prices, cp[0]), padPrices(prices, cp[1])]
     }, [prices, showCheapPeriod])
 
     const expensivePeriod = useMemo(() => {
