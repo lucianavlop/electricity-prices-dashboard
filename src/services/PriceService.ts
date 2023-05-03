@@ -52,65 +52,57 @@ export const getTwoCheapestPeriods = (
     prices: Price[],
     n: number,
 ): Price[][] => {
-    if (prices.length < 1) return [[], []]
+    if (prices.length < n) return [[], []]
 
     let firstPeriod = getCheapestPeriod(prices, n)
 
-    // Get the remaining prices before the first period
     const remainingPricesBefore = prices.filter(
         p =>
             new Date(p.dateTime).getTime() <
             new Date(firstPeriod[0].dateTime).getTime(),
     )
 
-    // Get the remaining prices after the first period
     const remainingPricesAfter = prices.filter(
         p =>
             new Date(p.dateTime).getTime() >
-            new Date(firstPeriod[firstPeriod.length - 1].dateTime).getTime(),
+            new Date(firstPeriod[n - 1].dateTime).getTime(),
     )
 
-    // Get the cheapest period from the remaining prices before the first period
     const firstPeriodBefore = getCheapestPeriod(remainingPricesBefore, n)
-
-    // Get the cheapest period from the remaining prices after the first period
     const firstPeriodAfter = getCheapestPeriod(remainingPricesAfter, n)
 
     let secondPeriod: Price[] = []
 
-    if (firstPeriodBefore.length < 3 && firstPeriodAfter.length >= 3) {
-        secondPeriod = firstPeriodAfter
-    } else if (firstPeriodBefore.length >= 3 && firstPeriodAfter.length < 3) {
-        secondPeriod = firstPeriodBefore
-    } else if (firstPeriodBefore.length >= 3 && firstPeriodAfter.length >= 3) {
-        // Find period with lowest average price
+    if (firstPeriodBefore.length === n && firstPeriodAfter.length === n) {
         const firstPeriodBeforeAverage = calculateAverage(firstPeriodBefore)
         const firstPeriodAfterAverage = calculateAverage(firstPeriodAfter)
 
-        if (firstPeriodBeforeAverage < firstPeriodAfterAverage) {
-            secondPeriod = firstPeriodBefore
-        } else {
-            secondPeriod = firstPeriodAfter
-        }
+        secondPeriod =
+            firstPeriodBeforeAverage < firstPeriodAfterAverage
+                ? firstPeriodBefore
+                : firstPeriodAfter
+    } else {
+        secondPeriod =
+            firstPeriodBefore.length === n
+                ? firstPeriodBefore
+                : firstPeriodAfter
     }
 
-    // If the period has passed return and empty array
     const now = new Date().getTime()
-    const endOfFirstPeriod = new Date(
-        firstPeriod[firstPeriod.length - 1].dateTime,
-    )
-    endOfFirstPeriod.setMinutes(59)
+    const endOfFirstPeriod = new Date(firstPeriod[n - 1].dateTime)
+    endOfFirstPeriod.setHours(endOfFirstPeriod.getHours() + 3)
+
+    const endOfSecondPeriod = new Date(secondPeriod[n - 1].dateTime)
+    endOfSecondPeriod.setHours(endOfSecondPeriod.getHours() + 3)
 
     if (endOfFirstPeriod.getTime() < now) {
         firstPeriod = []
     }
 
-    const endOfSecondPeriod = new Date(
-        secondPeriod[secondPeriod.length - 1].dateTime,
-    )
-    endOfSecondPeriod.setMinutes(59)
-
-    if (endOfSecondPeriod.getTime() < now) {
+    if (
+        endOfSecondPeriod.getTime() < now ||
+        endOfSecondPeriod.getTime() <= endOfFirstPeriod.getTime()
+    ) {
         secondPeriod = []
     }
 
