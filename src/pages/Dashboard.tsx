@@ -5,11 +5,8 @@ import Paper from "@mui/material/Paper"
 import DailyChart from "components/PriceChart"
 import { Price } from "models/Price"
 import { format, isSameHour } from "date-fns"
-import {
-    calculateAverage,
-    calculateRating,
-    getPrices,
-} from "services/PriceService"
+import { getPrices } from "services/PriceService"
+import { calculateAverage, calculateRating } from "utils/PriceUtils"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 
@@ -22,6 +19,12 @@ const DashboardContent: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             const prices = await getPrices(currentDate, currentDate)
+            if (prices.length === 0) return
+            const last = prices[prices.length - 1]
+            prices.push({
+                price: last.price,
+                dateTime: last.dateTime.slice(0, -8) + "24:00:00",
+            })
             setPricesToday(prices)
         }
         fetchData()
@@ -33,8 +36,16 @@ const DashboardContent: React.FC = () => {
             tomorrow.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000)
 
             const prices = await getPrices(tomorrow, tomorrow)
-
-            if (prices.length > 0) setPricesTomorrow(prices)
+            if (prices.length === 0) {
+                setPricesTomorrow(null)
+            } else {
+                const last = prices[prices.length - 1]
+                prices.push({
+                    price: last.price,
+                    dateTime: last.dateTime.slice(0, -8) + "24:00:00",
+                })
+                setPricesTomorrow(prices)
+            }
         }
         fetchData()
     }, [currentDate])
@@ -181,12 +192,6 @@ const DashboardContent: React.FC = () => {
                 <Container sx={{ p: 2 }}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label="Precio Promedio (30 días)"
-                                value={median}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
                             {currentPrice ? (
                                 <Metric
                                     label={`Precio actual - ${format(
@@ -232,6 +237,12 @@ const DashboardContent: React.FC = () => {
                                     median -
                                     (maxPriceToday ? maxPriceToday.price : 0)
                                 }
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Metric
+                                label="Precio Promedio (30 días)"
+                                value={median}
                             />
                         </Grid>
                     </Grid>
@@ -351,7 +362,7 @@ const DashboardContent: React.FC = () => {
                         prices={dailyMedians}
                         median={median}
                         chartId="DailyMedians"
-                        dateFormat="yyyy-MM-dd"
+                        dateFormat="MMM dd"
                         showCurrentPrice={false}
                         showCheapPeriod={false}
                         showExpensivePeriod={false}

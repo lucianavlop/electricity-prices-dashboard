@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo } from "react"
-import {
-    getCheapestPeriod,
-    getMostExpensivePeriod,
-} from "services/PriceService"
-import { format, isSameHour } from "date-fns"
-import Chart, { ChartData, ChartOptions } from "chart.js/auto"
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import { getMostExpensivePeriod, getTwoCheapestPeriods } from "utils/PriceUtils"
+import { format } from "date-fns"
+import { Chart, ChartData, ChartOptions } from "chart.js/auto"
+import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
+
+Chart.register(Annotation)
 
 export const ID_PREFIX = "daily-chart-"
 
@@ -28,6 +28,37 @@ export interface DailyChartProps {
     showExpensivePeriod: boolean
 }
 
+const filterAndPadPrices = (
+    prices: Price[],
+    cp: Price[],
+    now = new Date(),
+): (number | null)[] => {
+    if (cp.length < 1) return []
+
+    // If the period has passed return null array
+    const endOfPeriod = new Date(cp[cp.length - 1].dateTime)
+    endOfPeriod.setMinutes(59)
+
+    if (endOfPeriod.getTime() < now.getTime()) {
+        return []
+    }
+
+    return prices.map(p => {
+        const priceHour = new Date(p.dateTime).getHours()
+        // If the dateTime of item is contained in cp, return the price, else return null
+        if (
+            cp.find(cpItem => {
+                const cpHour = new Date(cpItem.dateTime).getHours()
+                return cpHour === priceHour || cpHour + 1 === priceHour
+            })
+        ) {
+            return p.price
+        } else {
+            return null
+        }
+    })
+}
+
 const DailyChart: React.FC<DailyChartProps> = ({
     prices,
     median,
@@ -38,12 +69,62 @@ const DailyChart: React.FC<DailyChartProps> = ({
     showExpensivePeriod,
 }) => {
     const theme = useTheme()
+    const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
+    const chartRef = useRef<Chart | null>(null)
 
-    let chart: Chart | undefined
+    useEffect(() => {
+        if (!showCurrentPrice || prices.length <= 1) return
+        // Function to be executed every minute
+        const updateData = () => {
+            if (!showCurrentPrice || prices.length <= 1) return
+            const canvasWidth = prices.length - 1
+            const startTime = new Date(prices[0].dateTime).getTime()
+            const endTime = new Date(
+                prices[prices.length - 1].dateTime,
+            ).getTime()
+            const currentTime = new Date().getTime()
+
+            if (currentTime < startTime || currentTime > endTime)
+                return setCurrentPriceLocation(-1)
+
+            setCurrentPriceLocation(
+                ((currentTime - startTime) / (endTime - startTime)) *
+                    canvasWidth,
+            )
+        }
+
+        // Run the function on component load
+        updateData()
+
+        // Set the interval to run the function every minute
+        const intervalId = setInterval(updateData, 10 * 60 * 1000)
+
+        // Cleanup function to clear the interval when the component is unmounted
+        return () => {
+            clearInterval(intervalId)
+        }
+    }, [prices, showCurrentPrice])
 
     const chartOptions = useMemo(() => {
+        // const currentTime = format(new Date(), dateFormat)
         const chartOptions: ChartOptions = {
             plugins: {
+                annotation: {
+                    annotations: [
+                        {
+                            type: "line",
+                            xScaleID: "x",
+                            xMin: currentPriceLocation, // The x-axis value where the vertical line should be drawn
+                            xMax: currentPriceLocation,
+                            borderColor:
+                                theme.palette.mode === "dark"
+                                    ? theme.palette.grey[300]
+                                    : theme.palette.grey[800],
+                            borderWidth: 4,
+                            display: currentPriceLocation !== -1,
+                        } as LineAnnotationOptions,
+                    ],
+                },
                 tooltip: {
                     callbacks: {
                         label: (context: any) => {
@@ -58,13 +139,14 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     },
                 },
                 legend: {
+                    position: "bottom",
                     labels: {
                         filter: item => {
                             return item.text !== "Hide" // Hide the label for 'Dataset 2'
                         },
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
@@ -85,46 +167,45 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 x: {
                     grid: {
                         display: false, // Set this to false to remove vertical grid lines
+                        // color: theme.palette.divider,
                     },
                     ticks: {
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: theme.palette.divider,
+                    },
                     ticks: {
                         color:
                             theme.palette.mode === "dark"
-                                ? theme.palette.grey[400]
+                                ? theme.palette.grey[300]
                                 : theme.palette.grey[800],
                     },
                 },
             },
         }
         return chartOptions
-    }, [theme])
+    }, [currentPriceLocation, theme])
 
-    const cheapPeriod = useMemo(() => {
-        if (!showCheapPeriod) return Array<null>(prices.length).fill(null)
+    const cheapPeriods = useMemo(() => {
+        if (!showCheapPeriod || prices.length <= 1)
+            return [
+                Array<null>(prices.length).fill(null),
+                Array<null>(prices.length).fill(null),
+            ]
 
-        const cp = getCheapestPeriod(prices, 3)
-        return prices.map(p => {
-            const priceHour = new Date(p.dateTime).getHours()
-            // If the dateTime of item is contained in cp, return the price, else return null
-            if (
-                cp.find(cpItem => {
-                    const cpHour = new Date(cpItem.dateTime).getHours()
-                    return cpHour === priceHour || cpHour + 1 === priceHour
-                })
-            ) {
-                return p.price
-            } else {
-                return null
-            }
-        })
+        const cp = getTwoCheapestPeriods(prices, 3)
+
+        return [
+            filterAndPadPrices(prices, cp[0]),
+            filterAndPadPrices(prices, cp[1]),
+        ]
     }, [prices, showCheapPeriod])
 
     const expensivePeriod = useMemo(() => {
@@ -147,24 +228,6 @@ const DailyChart: React.FC<DailyChartProps> = ({
         })
     }, [prices, showExpensivePeriod])
 
-    const currentPriceDataset = useMemo(() => {
-        if (!showCurrentPrice) return Array<null>(prices.length).fill(null)
-        const today = new Date()
-        const nextHour = new Date()
-        nextHour.setHours(nextHour.getHours() + 1)
-        return prices.map(item => {
-            // If the dateTime of item is contained in cp, return the price, else return null
-            if (
-                isSameHour(new Date(item.dateTime), today) ||
-                isSameHour(new Date(item.dateTime), nextHour)
-            ) {
-                return item.price
-            } else {
-                return null
-            }
-        })
-    }, [prices, showCurrentPrice])
-
     const averageDataset = useMemo(
         () => Array<number>(prices.length).fill(median),
         [prices, median],
@@ -178,23 +241,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
             datasets: [
                 {
                     label: "Hide",
-                    data: currentPriceDataset,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.6),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: currentPriceDataset,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.6),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapPeriod,
+                    data: cheapPeriods[0],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "start",
@@ -202,7 +249,23 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: cheapPeriod,
+                    data: cheapPeriods[0],
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: cheapPeriods[1],
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: cheapPeriods[1],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "end",
@@ -232,7 +295,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     pointRadius: 0,
                 },
                 {
-                    label: "Media",
+                    label: "Precio Promedio (30 días)",
                     data: averageDataset,
                     borderColor: theme.palette.secondary.main,
                     backgroundColor: hexToRGBA(
@@ -245,8 +308,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         }
     }, [
         averageDataset,
-        cheapPeriod,
-        currentPriceDataset,
+        cheapPeriods,
         dateFormat,
         expensivePeriod,
         prices,
@@ -259,11 +321,11 @@ const DailyChart: React.FC<DailyChartProps> = ({
         ) as HTMLCanvasElement
 
         if (chartCanvas) {
-            if (chart) {
-                chart.destroy()
+            if (chartRef.current) {
+                chartRef.current.destroy()
             }
 
-            chart = new Chart(chartCanvas, {
+            chartRef.current = new Chart(chartCanvas, {
                 type: "line",
                 data: chartData,
                 options: chartOptions,
@@ -271,11 +333,11 @@ const DailyChart: React.FC<DailyChartProps> = ({
         }
 
         return () => {
-            if (chart) {
-                chart.destroy()
+            if (chartRef.current) {
+                chartRef.current.destroy()
             }
         }
-    }, [chartData])
+    }, [chartData, chartOptions, chartId])
 
     return <canvas id={ID_PREFIX + chartId} />
 }
