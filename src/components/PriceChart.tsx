@@ -194,11 +194,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [currentPriceLocation, theme])
 
     const cheapPeriods = useMemo(() => {
-        if (!showCheapPeriod || prices.length <= 1)
-            return [
-                Array<null>(prices.length).fill(null),
-                Array<null>(prices.length).fill(null),
-            ]
+        if (!showCheapPeriod || prices.length <= 1) return [[], []]
 
         const cp = getTwoCheapestPeriods(prices, 3)
 
@@ -209,23 +205,10 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [prices, showCheapPeriod])
 
     const expensivePeriod = useMemo(() => {
-        if (!showExpensivePeriod) return Array<null>(prices.length).fill(null)
+        if (!showExpensivePeriod) return []
 
         const ep = getMostExpensivePeriod(prices, 3)
-        return prices.map(p => {
-            const priceHour = new Date(p.dateTime).getHours()
-            // If the dateTime of item is contained in ep, return the price, else return null
-            if (
-                ep.find(epItem => {
-                    const cpHour = new Date(epItem.dateTime).getHours()
-                    return cpHour === priceHour || cpHour + 1 === priceHour
-                })
-            ) {
-                return p.price
-            } else {
-                return null
-            }
-        })
+        return filterAndPadPrices(prices, ep)
     }, [prices, showExpensivePeriod])
 
     const averageDataset = useMemo(
