@@ -5,11 +5,8 @@ import Paper from "@mui/material/Paper"
 import DailyChart from "components/PriceChart"
 import { Price } from "models/Price"
 import { format, isSameHour } from "date-fns"
-import {
-    calculateAverage,
-    calculateRating,
-    getPrices,
-} from "services/PriceService"
+import { getPrices } from "services/PriceService"
+import { calculateAverage, calculateRating } from "utils/PriceUtils"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 

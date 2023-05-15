@@ -1,7 +1,7 @@
 import { Container, Grid, Typography, useTheme } from "@mui/material"
 import React from "react"
 import { ArrowUpward, ArrowDownward } from "@mui/icons-material"
-import { formatEuro } from "services/PriceService"
+import { formatEuro } from "utils/PriceUtils"
 
 interface MetricCardProps {
     label: string
@@ -10,11 +10,7 @@ interface MetricCardProps {
 }
 
 const ensurePositive = (number: number) => {
-    if (number < 0) {
-        number = -number // convert negative number to positive
-    }
-
-    return number
+    return Math.abs(number)
 }
 
 const Metric: React.FC<MetricCardProps> = ({ label, value, delta }) => {
