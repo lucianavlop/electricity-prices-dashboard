@@ -2,9 +2,11 @@ import {
     getCheapestPeriod,
     getTwoCheapestPeriods,
     getMostExpensivePeriod,
+    filterAndPadPrices,
 } from "./PriceUtils"
 import prices20230512 from "test/data/prices20230512.json"
 import prices20230513 from "test/data/prices20230513.json"
+import prices20230723 from "test/data/prices20230723.json"
 
 describe("getCheapestPeriod", () => {
     test("should return empty array if prices is empty", () => {
@@ -180,4 +182,34 @@ describe("getMostExpensivePeriod", () => {
             },
         ])
     })
+
+    test("Expensive period straddles midnight", () => {
+        expect(getMostExpensivePeriod(prices20230723, 3)).toEqual([
+            {
+                "id": "b14a7bf97c418986c5af55ad79b157f1",
+                "dateTime": "2023-07-23T21:00:00",
+                "price": 0.14206
+            },
+            {
+                "id": "b2bccb7fb13ae214973eb4909e353c1f",
+                "dateTime": "2023-07-23T22:00:00",
+                "price": 0.157
+            },
+            {
+                "id": "83d26efb860b6bff36b06481189983f9",
+                "dateTime": "2023-07-23T23:00:00",
+                "price": 0.15965000000000001
+            }])
+        })
+})
+
+describe("filterAndPadPrices", () => {
+    test("should return empty array if prices is empty", () => {
+        expect(filterAndPadPrices([])).toEqual([])
+    })
+
+    test("If the period has passed return null array", () => {
+        expect(filterAndPadPrices(prices20230513)).toEqual([])
+    })
+
 })
