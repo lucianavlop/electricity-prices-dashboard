@@ -20,11 +20,6 @@ const DashboardContent: React.FC = () => {
         const fetchData = async () => {
             const prices = await getPrices(currentDate, currentDate)
             if (prices.length === 0) return
-            const last = prices[prices.length - 1]
-            prices.push({
-                price: last.price,
-                dateTime: last.dateTime.slice(0, -8) + "24:00:00",
-            })
             setPricesToday(prices)
         }
         fetchData()
