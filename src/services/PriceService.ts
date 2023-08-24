@@ -2,7 +2,7 @@ import axios from "axios"
 import { format } from "date-fns"
 import { Price } from "models/Price"
 
-const PRICES_API = "https://elec-api.daithiapp.com/api/v1/price"
+const PRICES_API = "https://elec-prices-9603b16ade4e.herokuapp.com/api/v1/price"
 
 export const getPricesXDaysAgo = async (x: number): Promise<Price[]> => {
     const today = new Date()
