@@ -17,7 +17,11 @@ RUN yarn build
 FROM nginx:1.19-alpine AS deployment
 
 COPY --from=builder /app/build /usr/share/nginx/html
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf.template
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./nginx/entrypoint.sh /entrypoint.sh
 
-CMD nginx -g 'daemon off;'
+# Make our entrypoint script executable
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]

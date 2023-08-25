@@ -5,6 +5,8 @@ services:
         image: electricity-prices-dashboard
         container_name: electricity-prices-dashboard
         restart: always
+        environment:
+            - PORT=80
         ports:
             - 3000:80
         networks:
