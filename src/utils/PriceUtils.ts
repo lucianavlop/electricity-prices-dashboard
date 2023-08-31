@@ -148,17 +148,19 @@ export const filterAndPadPrices = (
         return []
     }
 
-    const paddedArray = Array.from({ length: 24 }, (_, i) => i).map(priceHour => {
-        return period.find(periodItem => {
-            const hour = new Date(periodItem.dateTime).getHours()
-            return hour === priceHour || hour + 1 === priceHour
+    const paddedArray = Array.from({ length: 24 }, (_, i) => i)
+        .map(priceHour => {
+            return period.find(periodItem => {
+                const hour = new Date(periodItem.dateTime).getHours()
+                return hour === priceHour || hour + 1 === priceHour
+            })
         })
-    }).map(price => price ? price.price : null)
+        .map(price => (price ? price.price : null))
 
     // If the period ends at 23:00, duplicate the last item for 24:00
     if (endOfPeriod.getHours() === 23) {
-        paddedArray.push(paddedArray[paddedArray.length - 1])}
+        paddedArray.push(paddedArray[paddedArray.length - 1])
+    }
 
-        console.log(JSON.stringify(paddedArray))
     return paddedArray
 }

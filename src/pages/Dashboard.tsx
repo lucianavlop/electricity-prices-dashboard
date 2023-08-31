@@ -5,21 +5,26 @@ import Paper from "@mui/material/Paper"
 import DailyChart from "components/PriceChart"
 import { Price } from "models/Price"
 import { format, isSameHour } from "date-fns"
-import { getPrices } from "services/PriceService"
-import { calculateAverage, calculateRating } from "utils/PriceUtils"
+import { getDailyPriceInfo, getPrices } from "services/PriceService"
+import { calculateAverage } from "utils/PriceUtils"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
+import { DailyPriceInfo } from "models/DailyPriceInfo"
+import { da } from "date-fns/locale"
+import { DayRating } from "models/DayRating"
 
 const DashboardContent: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
-    const [pricesToday, setPricesToday] = useState<Price[]>([])
-    const [pricesTomorrow, setPricesTomorrow] = useState<Price[] | null>(null)
+    const [pricesToday, setPricesToday] = useState<DailyPriceInfo | null>(null)
+    const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
+        null,
+    )
     const [pricesThirtyDays, setPricesThirtyDays] = useState<Price[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
-            const prices = await getPrices(currentDate, currentDate)
-            if (prices.length === 0) return
+            const prices = await getDailyPriceInfo(currentDate)
+            if (prices.prices.length === 0) return
             setPricesToday(prices)
         }
         fetchData()
@@ -30,12 +35,12 @@ const DashboardContent: React.FC = () => {
             const tomorrow = new Date()
             tomorrow.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000)
 
-            const prices = await getPrices(tomorrow, tomorrow)
-            if (prices.length === 0) {
+            const prices = await getDailyPriceInfo(tomorrow)
+            if (prices.prices.length === 0) {
                 setPricesTomorrow(null)
             } else {
-                const last = prices[prices.length - 1]
-                prices.push({
+                const last = prices.prices[prices.prices.length - 1]
+                prices.prices.push({
                     price: last.price,
                     dateTime: last.dateTime.slice(0, -8) + "24:00:00",
                 })
@@ -92,33 +97,35 @@ const DashboardContent: React.FC = () => {
 
     const currentPrice = useMemo(
         () =>
-            pricesToday.find(price =>
+            pricesToday?.prices.find(price =>
                 isSameHour(new Date(price.dateTime), currentDate),
-            ),
+            ) ?? null,
 
         [pricesToday, currentDate],
     )
 
     const minPriceToday = useMemo(() => {
-        const min = Math.min(...pricesToday.map(price => price.price))
-        return pricesToday.find(price => price.price === min)
+        if (!pricesToday) return null
+        const min = Math.min(...pricesToday.prices.map(price => price.price))
+        return pricesToday.prices.find(price => price.price === min)
     }, [pricesToday])
 
     const maxPriceToday = useMemo(() => {
-        const max = Math.max(...pricesToday.map(price => price.price))
-        return pricesToday.find(price => price.price === max)
+        if (!pricesToday) return null
+        const max = Math.max(...pricesToday.prices.map(price => price.price))
+        return pricesToday.prices.find(price => price.price === max)
     }, [pricesToday])
 
     const minPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
-        const min = Math.min(...pricesTomorrow.map(price => price.price))
-        return pricesTomorrow.find(price => price.price === min)
+        const min = Math.min(...pricesTomorrow.prices.map(price => price.price))
+        return pricesTomorrow.prices.find(price => price.price === min)
     }, [pricesTomorrow])
 
     const maxPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
-        const max = Math.max(...pricesTomorrow.map(price => price.price))
-        return pricesTomorrow.find(price => price.price === max)
+        const max = Math.max(...pricesTomorrow.prices.map(price => price.price))
+        return pricesTomorrow.prices.find(price => price.price === max)
     }, [pricesTomorrow])
 
     const dailyMedians = useMemo(() => {
@@ -138,15 +145,29 @@ const DashboardContent: React.FC = () => {
         return medians
     }, [pricesThirtyDays])
 
-    const todayRating = useMemo(
-        () => calculateRating(pricesToday, median),
-        [pricesToday, median],
-    )
+    const todayRating = useMemo(() => {
+        if (!pricesToday) return null
+        switch (pricesToday?.dayRating) {
+            case DayRating.BAD:
+                return "MALO"
+            case DayRating.GOOD:
+                return "BUENO"
+            default:
+                return "NORMAL"
+        }
+    }, [pricesToday])
 
-    const tomorrowRating = useMemo(
-        () => (pricesTomorrow ? calculateRating(pricesTomorrow, median) : null),
-        [pricesTomorrow, median],
-    )
+    const tomorrowRating = useMemo(() => {
+        if (!pricesTomorrow) return null
+        switch (pricesTomorrow?.dayRating) {
+            case DayRating.BAD:
+                return "MALO"
+            case DayRating.GOOD:
+                return "BUENO"
+            default:
+                return "NORMAL"
+        }
+    }, [pricesTomorrow])
 
     return (
         <Box
@@ -177,8 +198,11 @@ const DashboardContent: React.FC = () => {
                         align="left"
                         gutterBottom>
                         Hoy{" "}
-                        {pricesToday.length > 0
-                            ? format(new Date(pricesToday[0].dateTime), "dd/MM")
+                        {pricesToday && pricesToday.prices.length > 0
+                            ? format(
+                                  new Date(pricesToday.prices[0].dateTime),
+                                  "dd/MM",
+                              )
                             : ""}{" "}
                         es un día {todayRating}
                     </Typography>
@@ -244,15 +268,17 @@ const DashboardContent: React.FC = () => {
                 </Container>
 
                 <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyChart
-                        prices={pricesToday}
-                        median={median}
-                        chartId="Today"
-                        dateFormat="HH:mm"
-                        showCurrentPrice={true}
-                        showCheapPeriod={true}
-                        showExpensivePeriod={true}
-                    />
+                    {pricesToday && (
+                        <DailyChart
+                            prices={pricesToday.prices}
+                            median={median}
+                            chartId="Today"
+                            dateFormat="HH:mm"
+                            showCurrentPrice={true}
+                            cheapestPeriods={pricesToday.cheapestPeriods}
+                            expensivePeriod={pricesToday.expensivePeriod}
+                        />
+                    )}
                 </Container>
 
                 <Container sx={{ p: 2 }}>
@@ -261,11 +287,9 @@ const DashboardContent: React.FC = () => {
                         component="h2"
                         align="left"
                         gutterBottom>
-                        {pricesTomorrow &&
-                        tomorrowRating &&
-                        pricesTomorrow.length > 0
+                        {pricesTomorrow && pricesTomorrow.prices.length > 0
                             ? `Mañana ${format(
-                                  new Date(pricesTomorrow[0].dateTime),
+                                  new Date(pricesTomorrow.prices[0].dateTime),
                                   "dd/MM",
                               )} es un día ${tomorrowRating}`
                             : `Los precios de mañana aún no están disponibles - approx. 20:30`}
@@ -332,13 +356,13 @@ const DashboardContent: React.FC = () => {
                 {pricesTomorrow && (
                     <Container sx={{ p: 2, height: "400px" }}>
                         <DailyChart
-                            prices={pricesTomorrow}
+                            prices={pricesTomorrow.prices}
                             median={median}
                             chartId="Tomorrow"
                             dateFormat="HH:mm"
                             showCurrentPrice={true}
-                            showCheapPeriod={true}
-                            showExpensivePeriod={true}
+                            cheapestPeriods={pricesTomorrow.cheapestPeriods}
+                            expensivePeriod={pricesTomorrow.expensivePeriod}
                         />
                     </Container>
                 )}
@@ -359,8 +383,8 @@ const DashboardContent: React.FC = () => {
                         chartId="DailyMedians"
                         dateFormat="MMM dd"
                         showCurrentPrice={false}
-                        showCheapPeriod={false}
-                        showExpensivePeriod={false}
+                        cheapestPeriods={{ first: [], second: [] }}
+                        expensivePeriod={[]}
                     />
                 </Container>
             </Paper>

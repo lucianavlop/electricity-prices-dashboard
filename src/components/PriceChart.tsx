@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { filterAndPadPrices, getMostExpensivePeriod, getTwoCheapestPeriods } from "utils/PriceUtils"
 import { format } from "date-fns"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
+import { Pair } from "models/DailyPriceInfo"
+import { filterAndPadPrices } from "utils/PriceUtils"
 
 Chart.register(Annotation)
 
@@ -24,8 +25,8 @@ export interface DailyChartProps {
     chartId: string
     dateFormat: string
     showCurrentPrice: boolean
-    showCheapPeriod: boolean
-    showExpensivePeriod: boolean
+    cheapestPeriods: Pair<Price[]>
+    expensivePeriod: Price[]
 }
 
 const DailyChart: React.FC<DailyChartProps> = ({
@@ -34,8 +35,8 @@ const DailyChart: React.FC<DailyChartProps> = ({
     chartId,
     dateFormat,
     showCurrentPrice,
-    showCheapPeriod,
-    showExpensivePeriod,
+    cheapestPeriods,
+    expensivePeriod,
 }) => {
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
@@ -161,23 +162,18 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return chartOptions
     }, [currentPriceLocation, theme])
 
-    const cheapPeriods = useMemo(() => {
-        if (!showCheapPeriod || prices.length <= 1) return [[], []]
-
-        const cp = getTwoCheapestPeriods(prices, 3)
-
+    const cheapestPeriodsPadded = useMemo(() => {
         return [
-            filterAndPadPrices(cp[0]),
-            filterAndPadPrices(cp[1]),
+            filterAndPadPrices(cheapestPeriods.first),
+            filterAndPadPrices(cheapestPeriods.second),
         ]
-    }, [prices, showCheapPeriod])
+    }, [cheapestPeriods])
 
-    const expensivePeriod = useMemo(() => {
-        if (!showExpensivePeriod) return []
+    const expensivePeriodPadded = useMemo(
+        () => filterAndPadPrices(expensivePeriod),
 
-        const ep = getMostExpensivePeriod(prices, 3)
-        return filterAndPadPrices(ep)
-    }, [prices, showExpensivePeriod])
+        [expensivePeriod],
+    )
 
     const paddedPrices = useMemo(() => {
         if (prices.length === 0) return []
@@ -203,7 +199,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
             datasets: [
                 {
                     label: "Hide",
-                    data: cheapPeriods[0],
+                    data: cheapestPeriodsPadded[0],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "start",
@@ -211,7 +207,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: cheapPeriods[0],
+                    data: cheapestPeriodsPadded[0],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "end",
@@ -219,7 +215,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: cheapPeriods[1],
+                    data: cheapestPeriodsPadded[1],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "start",
@@ -227,7 +223,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: cheapPeriods[1],
+                    data: cheapestPeriodsPadded[1],
                     backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
                     showLine: false,
                     fill: "end",
@@ -235,7 +231,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: expensivePeriod,
+                    data: expensivePeriodPadded,
                     backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
                     showLine: false,
                     fill: "start",
@@ -243,7 +239,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
                 },
                 {
                     label: "Hide",
-                    data: expensivePeriod,
+                    data: expensivePeriodPadded,
                     backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
                     showLine: false,
                     fill: "end",
@@ -270,9 +266,9 @@ const DailyChart: React.FC<DailyChartProps> = ({
         }
     }, [
         averageDataset,
-        cheapPeriods,
+        cheapestPeriodsPadded,
         dateFormat,
-        expensivePeriod,
+        expensivePeriodPadded,
         paddedPrices,
         theme,
     ])
