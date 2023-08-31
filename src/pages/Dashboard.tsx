@@ -10,7 +10,6 @@ import { calculateAverage } from "utils/PriceUtils"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
-import { da } from "date-fns/locale"
 import { DayRating } from "models/DayRating"
 
 const DashboardContent: React.FC = () => {
@@ -65,6 +64,7 @@ const DashboardContent: React.FC = () => {
     }, [currentDate])
 
     useEffect(() => {
+        // Set date to 3 days ago
         const fetchData = () => setCurrentDate(new Date())
         // Calculate time remaining until the start of the next hour
         const now = new Date()
