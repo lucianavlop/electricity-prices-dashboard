@@ -3,8 +3,8 @@ import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
 import DailyChart from "components/PriceChart"
+import { DateTime } from "luxon"
 import { Price } from "models/Price"
-import { format, isSameHour } from "date-fns"
 import { getDailyPriceInfo, getPrices } from "services/PriceService"
 import { calculateAverage } from "utils/PriceUtils"
 import { Container, Grid } from "@mui/material"
@@ -13,7 +13,9 @@ import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { DayRating } from "models/DayRating"
 
 const DashboardContent: React.FC = () => {
-    const [currentDate, setCurrentDate] = useState(new Date())
+    const [currentDate, setCurrentDate] = useState(
+        DateTime.now().setZone("Europe/Madrid"),
+    )
     const [pricesToday, setPricesToday] = useState<DailyPriceInfo | null>(null)
     const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
         null,
@@ -31,8 +33,7 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const tomorrow = new Date()
-            tomorrow.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000)
+            const tomorrow = currentDate.plus({ days: 1 })
 
             const prices = await getDailyPriceInfo(tomorrow)
             if (prices.prices.length === 0) {
@@ -51,10 +52,7 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const thirtyDaysAgo = new Date()
-            thirtyDaysAgo.setTime(
-                currentDate.getTime() - 30 * 24 * 60 * 60 * 1000,
-            )
+            const thirtyDaysAgo = currentDate.minus({ days: 30 })
 
             const prices = await getPrices(thirtyDaysAgo, currentDate)
 
@@ -65,11 +63,15 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         // Set date to 3 days ago
-        const fetchData = () => setCurrentDate(new Date())
+        const fetchData = () =>
+            setCurrentDate(DateTime.now().setZone("Europe/Madrid"))
         // Calculate time remaining until the start of the next hour
-        const now = new Date()
-        const millisecondsUntilNextHour =
-            (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000
+        const now = DateTime.now().setZone("Europe/Madrid")
+        const nextHour = now.startOf("hour").plus({ hour: 1 })
+        const millisecondsUntilNextHour = nextHour.diff(
+            now,
+            "milliseconds",
+        ).milliseconds
 
         // Set a timeout to execute the function when the next hour starts
         const timeoutId = setTimeout(() => {
@@ -95,14 +97,17 @@ const DashboardContent: React.FC = () => {
         [pricesThirtyDays],
     )
 
-    const currentPrice = useMemo(
-        () =>
-            pricesToday?.prices.find(price =>
-                isSameHour(new Date(price.dateTime), currentDate),
-            ) ?? null,
+    const currentPrice = useMemo(() => {
+        return (
+            pricesToday?.prices.find(price => {
+                const priceDateTimeInMadrid = DateTime.fromISO(
+                    price.dateTime,
+                ).setZone("Europe/Madrid")
 
-        [pricesToday, currentDate],
-    )
+                return currentDate.hasSame(priceDateTimeInMadrid, "hour")
+            }) ?? null
+        )
+    }, [pricesToday, currentDate])
 
     const minPriceToday = useMemo(() => {
         if (!pricesToday) return null
@@ -199,10 +204,9 @@ const DashboardContent: React.FC = () => {
                         gutterBottom>
                         Hoy{" "}
                         {pricesToday && pricesToday.prices.length > 0
-                            ? format(
-                                  new Date(pricesToday.prices[0].dateTime),
-                                  "dd/MM",
-                              )
+                            ? DateTime.fromISO(pricesToday.prices[0].dateTime)
+                                  .setZone("Europe/Madrid")
+                                  .toFormat("dd/MM")
                             : ""}{" "}
                         es un día {todayRating}
                     </Typography>
@@ -213,10 +217,9 @@ const DashboardContent: React.FC = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             {currentPrice ? (
                                 <Metric
-                                    label={`Precio actual - ${format(
-                                        currentDate,
-                                        "HH:mm",
-                                    )}`}
+                                    label={`Precio actual - ${currentDate
+                                        .setZone("Europe/Madrid")
+                                        .toFormat("HH:mm")}`}
                                     value={currentPrice.price}
                                     delta={median - currentPrice.price}
                                 />
@@ -228,10 +231,11 @@ const DashboardContent: React.FC = () => {
                             <Metric
                                 label={`Precio min - ${
                                     minPriceToday
-                                        ? format(
-                                              new Date(minPriceToday.dateTime),
-                                              "HH:mm",
+                                        ? DateTime.fromISO(
+                                              minPriceToday.dateTime,
                                           )
+                                              .setZone("Europe/Madrid")
+                                              .toFormat("HH:mm")
                                         : ""
                                 }`}
                                 value={minPriceToday ? minPriceToday.price : 0}
@@ -245,10 +249,11 @@ const DashboardContent: React.FC = () => {
                             <Metric
                                 label={`Precio max - ${
                                     maxPriceToday
-                                        ? format(
-                                              new Date(maxPriceToday.dateTime),
-                                              "HH:mm",
+                                        ? DateTime.fromISO(
+                                              maxPriceToday.dateTime,
                                           )
+                                              .setZone("Europe/Madrid")
+                                              .toFormat("HH:mm")
                                         : ""
                                 }`}
                                 value={maxPriceToday ? maxPriceToday.price : 0}
@@ -288,10 +293,13 @@ const DashboardContent: React.FC = () => {
                         align="left"
                         gutterBottom>
                         {pricesTomorrow && pricesTomorrow.prices.length > 0
-                            ? `Mañana ${format(
-                                  new Date(pricesTomorrow.prices[0].dateTime),
-                                  "dd/MM",
-                              )} es un día ${tomorrowRating}`
+                            ? `Mañana ${DateTime.fromISO(
+                                  pricesTomorrow.prices[0].dateTime,
+                              )
+                                  .setZone("Europe/Madrid")
+                                  .toFormat(
+                                      "dd/MM",
+                                  )} es un día ${tomorrowRating}`
                             : `Los precios de mañana aún no están disponibles - approx. 20:30`}
                     </Typography>
                 </Container>
@@ -303,12 +311,11 @@ const DashboardContent: React.FC = () => {
                                 <Metric
                                     label={`Precio max - ${
                                         maxPriceTomorrow
-                                            ? format(
-                                                  new Date(
-                                                      maxPriceTomorrow.dateTime,
-                                                  ),
-                                                  "HH:mm",
+                                            ? DateTime.fromISO(
+                                                  maxPriceTomorrow.dateTime,
                                               )
+                                                  .setZone("Europe/Madrid")
+                                                  .toFormat("HH:mm")
                                             : ""
                                     }`}
                                     value={
@@ -328,12 +335,11 @@ const DashboardContent: React.FC = () => {
                                 <Metric
                                     label={`Precio min - ${
                                         minPriceTomorrow
-                                            ? format(
-                                                  new Date(
-                                                      minPriceTomorrow.dateTime,
-                                                  ),
-                                                  "HH:mm",
+                                            ? DateTime.fromISO(
+                                                  minPriceTomorrow.dateTime,
                                               )
+                                                  .setZone("Europe/Madrid")
+                                                  .toFormat("HH:mm")
                                             : ""
                                     }`}
                                     value={

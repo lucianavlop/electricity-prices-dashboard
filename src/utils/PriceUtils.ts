@@ -1,4 +1,5 @@
 import { Price } from "models/Price"
+import { DateTime } from "luxon"
 
 const VARIANCE = 0.02
 
@@ -7,7 +8,12 @@ export type DayRating = "BUENO" | "NORMAL" | "MALO"
 const sortPricesByDate = (prices: Price[]): Price[] => {
     return prices.sort(
         (a, b) =>
-            new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
+            DateTime.fromISO(a.dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis() -
+            DateTime.fromISO(b.dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis(),
     )
 }
 
@@ -42,14 +48,22 @@ export const getTwoCheapestPeriods = (
 
     const remainingPricesBefore = prices.filter(
         p =>
-            new Date(p.dateTime).getTime() <
-            new Date(firstPeriod[0].dateTime).getTime(),
+            DateTime.fromISO(p.dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis() <
+            DateTime.fromISO(firstPeriod[0].dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis(),
     )
 
     const remainingPricesAfter = prices.filter(
         p =>
-            new Date(p.dateTime).getTime() >
-            new Date(firstPeriod[n - 1].dateTime).getTime(),
+            DateTime.fromISO(p.dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis() >
+            DateTime.fromISO(firstPeriod[n - 1].dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis(),
     )
 
     const firstPeriodBefore = getCheapestPeriod(remainingPricesBefore, n)
