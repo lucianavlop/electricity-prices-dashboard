@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { format } from "date-fns"
+import { DateTime } from "luxon"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
@@ -47,12 +47,20 @@ const DailyChart: React.FC<DailyChartProps> = ({
         // Function to be executed every minute
         const updateData = () => {
             if (!showCurrentPrice || prices.length <= 1) return
+
             const canvasWidth = prices.length - 1
-            const startTime = new Date(prices[0].dateTime).getTime()
-            const endTime = new Date(
+
+            // Use Luxon's DateTime objects with Europe/Madrid timezone
+            const startTime = DateTime.fromISO(prices[0].dateTime, {
+                zone: "Europe/Madrid",
+            }).toMillis()
+            const endTime = DateTime.fromISO(
                 prices[prices.length - 1].dateTime,
-            ).getTime()
-            const currentTime = new Date().getTime()
+                { zone: "Europe/Madrid" },
+            ).toMillis()
+            const currentTime = DateTime.now()
+                .setZone("Europe/Madrid")
+                .toMillis()
 
             if (currentTime < startTime || currentTime > endTime)
                 return setCurrentPriceLocation(-1)
@@ -194,7 +202,9 @@ const DailyChart: React.FC<DailyChartProps> = ({
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
         return {
             labels: paddedPrices.map(item =>
-                format(new Date(item.dateTime), dateFormat),
+                DateTime.fromISO(item.dateTime, {
+                    zone: "Europe/Madrid",
+                }).toFormat(dateFormat),
             ),
             datasets: [
                 {
