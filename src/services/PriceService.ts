@@ -3,7 +3,8 @@ import { format } from "date-fns"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { Price } from "models/Price"
 
-const PRICES_API = "https://elec-prices-9603b16ade4e.herokuapp.com/api/v1/price"
+// const PRICES_API = "https://elec-prices-9603b16ade4e.herokuapp.com/api/v1/price"
+const PRICES_API = "https://elec-api.daithiapp.com/api/v1/price"
 
 export const getPrices = async (start: Date, end: Date): Promise<Price[]> => {
     const start_day = format(start, "yyyy-MM-dd")
