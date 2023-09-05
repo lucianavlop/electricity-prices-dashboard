@@ -6,6 +6,7 @@ import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
 import { Pair } from "models/DailyPriceInfo"
 import { filterAndPadPrices } from "utils/PriceUtils"
+import { useI18nContext } from "i18n/i18n-react"
 
 Chart.register(Annotation)
 
@@ -38,6 +39,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     cheapestPeriods,
     expensivePeriod,
 }) => {
+    const { LL } = useI18nContext()
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
     const chartRef = useRef<Chart | null>(null)
@@ -256,14 +258,14 @@ const DailyChart: React.FC<DailyChartProps> = ({
                     pointRadius: 0,
                 },
                 {
-                    label: "Precio",
+                    label: LL.PRICE(),
                     data: paddedPrices.map(item => item.price),
                     borderColor: theme.palette.info.main,
                     backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
                     pointRadius: 0,
                 },
                 {
-                    label: "Precio Promedio (30 días)",
+                    label: LL.THIRTY_DAY_AVG(),
                     data: averageDataset,
                     borderColor: theme.palette.secondary.main,
                     backgroundColor: hexToRGBA(
@@ -281,6 +283,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         expensivePeriodPadded,
         paddedPrices,
         theme,
+        LL,
     ])
 
     useEffect(() => {
