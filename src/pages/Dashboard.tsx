@@ -308,31 +308,7 @@ const DashboardContent: React.FC = () => {
 
                 {minPriceTomorrow && maxPriceTomorrow && (
                     <Container sx={{ p: 2 }}>
-                        <Grid container spacing={3} direction="row-reverse">
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={LL.MAX_PRICE({
-                                        maxPrice: maxPriceTomorrow
-                                            ? DateTime.fromISO(
-                                                  maxPriceTomorrow.dateTime,
-                                              )
-                                                  .setZone("Europe/Madrid")
-                                                  .toFormat("HH:mm")
-                                            : "",
-                                    })}
-                                    value={
-                                        maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0
-                                    }
-                                    delta={
-                                        median -
-                                        (maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0)
-                                    }
-                                />
-                            </Grid>
+                        <Grid container spacing={3} direction="row">
                             <Grid item xs={12} sm={6} md={3}>
                                 <Metric
                                     label={LL.MIN_PRICE({
@@ -353,6 +329,30 @@ const DashboardContent: React.FC = () => {
                                         median -
                                         (minPriceTomorrow
                                             ? minPriceTomorrow.price
+                                            : 0)
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Metric
+                                    label={LL.MAX_PRICE({
+                                        maxPrice: maxPriceTomorrow
+                                            ? DateTime.fromISO(
+                                                  maxPriceTomorrow.dateTime,
+                                              )
+                                                  .setZone("Europe/Madrid")
+                                                  .toFormat("HH:mm")
+                                            : "",
+                                    })}
+                                    value={
+                                        maxPriceTomorrow
+                                            ? maxPriceTomorrow.price
+                                            : 0
+                                    }
+                                    delta={
+                                        median -
+                                        (maxPriceTomorrow
+                                            ? maxPriceTomorrow.price
                                             : 0)
                                     }
                                 />
