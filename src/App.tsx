@@ -5,11 +5,11 @@ import Dashboard from "pages/Dashboard"
 import { Box, CssBaseline, createTheme, useMediaQuery } from "@mui/material"
 import TypesafeI18n from "i18n/i18n-react"
 import { loadLocale } from "i18n/i18n-util.sync"
-import { detectLocale } from "i18n/i18n-util"
+import { Locales } from "i18n/i18n-types"
 
 function App() {
     const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)")
-    const locale = detectLocale()
+    const locale: Locales = navigator?.language.startsWith("en") ? "en" : "es"
 
     const theme = React.useMemo(
         () =>

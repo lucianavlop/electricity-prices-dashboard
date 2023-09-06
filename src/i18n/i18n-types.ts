@@ -3,7 +3,7 @@
 import type { BaseTranslation as BaseTranslationType, LocalizedString, RequiredParams } from 'typesafe-i18n'
 
 export type BaseTranslation = BaseTranslationType
-export type BaseLocale = 'en'
+export type BaseLocale = 'es'
 
 export type Locales =
 	| 'en'
@@ -15,93 +15,93 @@ export type Translations = RootTranslation
 
 type RootTranslation = {
 	/**
-	 * E​l​e​c​t​r​i​c​i​t​y​ ​p​r​i​c​e​s
+	 * P​r​e​c​i​o​s​ ​d​e​ ​l​a​ ​e​l​e​c​t​r​i​c​i​d​a​d
 	 */
 	TITLE: string
 	/**
-	 * T​o​d​a​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​i​s​ ​a​ ​{​r​a​t​i​n​g​}​ ​d​a​y
+	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​{​r​a​t​i​n​g​}
 	 * @param {string} currentDate
 	 * @param {string} rating
 	 */
 	TODAY_RATING: RequiredParams<'currentDate' | 'rating'>
 	/**
-	 * C​u​r​r​e​n​t​ ​p​r​i​c​e​ ​-​ ​{​c​u​r​r​e​n​t​T​i​m​e​}
+	 * P​r​e​c​i​o​ ​a​c​t​u​a​l​ ​-​ ​{​c​u​r​r​e​n​t​T​i​m​e​}
 	 * @param {string} currentTime
 	 */
 	CURRENT_PRICE: RequiredParams<'currentTime'>
 	/**
-	 * M​i​n​ ​p​r​i​c​e​ ​-​ ​{​m​i​n​P​r​i​c​e​}
+	 * P​r​e​c​i​o​ ​m​i​n​ ​-​ ​{​m​i​n​P​r​i​c​e​}
 	 * @param {string} minPrice
 	 */
 	MIN_PRICE: RequiredParams<'minPrice'>
 	/**
-	 * M​a​x​ ​p​r​i​c​e​ ​-​ ​{​m​a​x​P​r​i​c​e​}
+	 * P​r​e​c​i​o​ ​m​a​x​ ​-​ ​{​m​a​x​P​r​i​c​e​}
 	 * @param {string} maxPrice
 	 */
 	MAX_PRICE: RequiredParams<'maxPrice'>
 	/**
-	 * 3​0​ ​d​a​y​ ​a​v​e​r​a​g​e
+	 * P​r​e​c​i​o​ ​p​r​o​m​e​d​i​o​ ​d​e​ ​3​0​ ​d​í​a​s
 	 */
 	THIRTY_DAY_AVG: string
 	/**
-	 * T​o​m​o​r​r​o​w​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​i​s​ ​a​ ​{​r​a​t​i​n​g​}​ ​d​a​y
+	 * M​a​ñ​a​n​a​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​{​r​a​t​i​n​g​}
 	 * @param {string} currentDate
 	 * @param {string} rating
 	 */
 	TOMORROW_RATING: RequiredParams<'currentDate' | 'rating'>
 	/**
-	 * T​o​m​o​r​r​o​w​'​s​ ​p​r​i​c​e​s​ ​a​r​e​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​y​e​t​.​ ​P​r​i​c​e​s​ ​a​r​e​ ​u​s​u​a​l​l​y​ ​a​v​a​i​l​a​b​l​e​ ​a​f​t​e​r​ ​2​0​:​3​0
+	 * L​o​s​ ​d​a​t​o​s​ ​d​e​ ​m​a​ñ​a​n​a​ ​a​ú​n​ ​n​o​ ​e​s​t​á​n​ ​d​i​s​p​o​n​i​b​l​e​s​.​ ​L​o​s​ ​p​r​e​c​i​o​s​ ​s​u​e​l​e​n​ ​e​s​t​a​r​ ​d​i​s​p​o​n​i​b​l​e​s​ ​d​e​s​p​u​é​s​ ​d​e​ ​l​a​s​ ​2​0​:​3​0
 	 */
 	TOMORROW_NO_DATA: string
 	/**
-	 * L​a​s​t​ ​3​0​ ​d​a​y​s
+	 * Ú​l​t​i​m​o​s​ ​3​0​ ​d​í​a​s
 	 */
 	LAST_THIRTY_DAYS: string
 	/**
-	 * P​r​i​c​e
+	 * P​r​e​c​i​o
 	 */
 	PRICE: string
 }
 
 export type TranslationFunctions = {
 	/**
-	 * Electricity prices
+	 * Precios de la electricidad
 	 */
 	TITLE: () => LocalizedString
 	/**
-	 * Today {currentDate} is a {rating} day
+	 * Hoy {currentDate} es un día {rating}
 	 */
 	TODAY_RATING: (arg: { currentDate: string, rating: string }) => LocalizedString
 	/**
-	 * Current price - {currentTime}
+	 * Precio actual - {currentTime}
 	 */
 	CURRENT_PRICE: (arg: { currentTime: string }) => LocalizedString
 	/**
-	 * Min price - {minPrice}
+	 * Precio min - {minPrice}
 	 */
 	MIN_PRICE: (arg: { minPrice: string }) => LocalizedString
 	/**
-	 * Max price - {maxPrice}
+	 * Precio max - {maxPrice}
 	 */
 	MAX_PRICE: (arg: { maxPrice: string }) => LocalizedString
 	/**
-	 * 30 day average
+	 * Precio promedio de 30 días
 	 */
 	THIRTY_DAY_AVG: () => LocalizedString
 	/**
-	 * Tomorrow {currentDate} is a {rating} day
+	 * Mañana {currentDate} es un día {rating}
 	 */
 	TOMORROW_RATING: (arg: { currentDate: string, rating: string }) => LocalizedString
 	/**
-	 * Tomorrow's prices are not available yet. Prices are usually available after 20:30
+	 * Los datos de mañana aún no están disponibles. Los precios suelen estar disponibles después de las 20:30
 	 */
 	TOMORROW_NO_DATA: () => LocalizedString
 	/**
-	 * Last 30 days
+	 * Últimos 30 días
 	 */
 	LAST_THIRTY_DAYS: () => LocalizedString
 	/**
-	 * Price
+	 * Precio
 	 */
 	PRICE: () => LocalizedString
 }
