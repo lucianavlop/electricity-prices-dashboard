@@ -19,11 +19,20 @@ type RootTranslation = {
 	 */
 	TITLE: string
 	/**
-	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​{​r​a​t​i​n​g​}
+	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​B​U​E​N​O
 	 * @param {string} currentDate
-	 * @param {string} rating
 	 */
-	TODAY_RATING: RequiredParams<'currentDate' | 'rating'>
+	TODAY_RATING_GOOD: RequiredParams<'currentDate'>
+	/**
+	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​M​A​L​O
+	 * @param {string} currentDate
+	 */
+	TODAY_RATING_BAD: RequiredParams<'currentDate'>
+	/**
+	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​N​O​R​M​A​L
+	 * @param {string} currentDate
+	 */
+	TODAY_RATING_NORMAL: RequiredParams<'currentDate'>
 	/**
 	 * P​r​e​c​i​o​ ​a​c​t​u​a​l​ ​-​ ​{​c​u​r​r​e​n​t​T​i​m​e​}
 	 * @param {string} currentTime
@@ -44,11 +53,20 @@ type RootTranslation = {
 	 */
 	THIRTY_DAY_AVG: string
 	/**
-	 * M​a​ñ​a​n​a​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​{​r​a​t​i​n​g​}
+	 * M​a​ñ​a​n​a​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​B​U​E​N​O
 	 * @param {string} currentDate
-	 * @param {string} rating
 	 */
-	TOMORROW_RATING: RequiredParams<'currentDate' | 'rating'>
+	TOMORROW_RATING_GOOD: RequiredParams<'currentDate'>
+	/**
+	 * M​a​ñ​a​n​a​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​M​A​L​O
+	 * @param {string} currentDate
+	 */
+	TOMORROW_RATING_BAD: RequiredParams<'currentDate'>
+	/**
+	 * M​a​ñ​a​n​a​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​N​O​R​M​A​L
+	 * @param {string} currentDate
+	 */
+	TOMORROW_RATING_NORMAL: RequiredParams<'currentDate'>
 	/**
 	 * L​o​s​ ​d​a​t​o​s​ ​d​e​ ​m​a​ñ​a​n​a​ ​a​ú​n​ ​n​o​ ​e​s​t​á​n​ ​d​i​s​p​o​n​i​b​l​e​s​.​ ​L​o​s​ ​p​r​e​c​i​o​s​ ​s​u​e​l​e​n​ ​e​s​t​a​r​ ​d​i​s​p​o​n​i​b​l​e​s​ ​d​e​s​p​u​é​s​ ​d​e​ ​l​a​s​ ​2​0​:​3​0
 	 */
@@ -69,9 +87,17 @@ export type TranslationFunctions = {
 	 */
 	TITLE: () => LocalizedString
 	/**
-	 * Hoy {currentDate} es un día {rating}
+	 * Hoy {currentDate} es un día BUENO
 	 */
-	TODAY_RATING: (arg: { currentDate: string, rating: string }) => LocalizedString
+	TODAY_RATING_GOOD: (arg: { currentDate: string }) => LocalizedString
+	/**
+	 * Hoy {currentDate} es un día MALO
+	 */
+	TODAY_RATING_BAD: (arg: { currentDate: string }) => LocalizedString
+	/**
+	 * Hoy {currentDate} es un día NORMAL
+	 */
+	TODAY_RATING_NORMAL: (arg: { currentDate: string }) => LocalizedString
 	/**
 	 * Precio actual - {currentTime}
 	 */
@@ -89,9 +115,17 @@ export type TranslationFunctions = {
 	 */
 	THIRTY_DAY_AVG: () => LocalizedString
 	/**
-	 * Mañana {currentDate} es un día {rating}
+	 * Mañana {currentDate} es un día BUENO
 	 */
-	TOMORROW_RATING: (arg: { currentDate: string, rating: string }) => LocalizedString
+	TOMORROW_RATING_GOOD: (arg: { currentDate: string }) => LocalizedString
+	/**
+	 * Mañana {currentDate} es un día MALO
+	 */
+	TOMORROW_RATING_BAD: (arg: { currentDate: string }) => LocalizedString
+	/**
+	 * Mañana {currentDate} es un día NORMAL
+	 */
+	TOMORROW_RATING_NORMAL: (arg: { currentDate: string }) => LocalizedString
 	/**
 	 * Los datos de mañana aún no están disponibles. Los precios suelen estar disponibles después de las 20:30
 	 */

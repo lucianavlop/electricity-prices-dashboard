@@ -152,27 +152,48 @@ const DashboardContent: React.FC = () => {
         return medians
     }, [pricesThirtyDays])
 
-    const todayRating = useMemo(() => {
+    const todayRatingText = useMemo(() => {
+        const date = currentDate.setZone("Europe/Madrid").toFormat("dd/MM")
+
         switch (pricesToday?.dayRating) {
             case DayRating.BAD:
-                return "MALO"
+                return LL.TODAY_RATING_BAD({
+                    currentDate: date,
+                })
             case DayRating.GOOD:
-                return "BUENO"
+                return LL.TODAY_RATING_GOOD({
+                    currentDate: date,
+                })
             default:
-                return "NORMAL"
+                return LL.TODAY_RATING_NORMAL({
+                    currentDate: date,
+                })
         }
-    }, [pricesToday])
+    }, [pricesToday, currentDate, LL])
 
-    const tomorrowRating = useMemo(() => {
+    const tomorrowRatingText = useMemo(() => {
+        if (!pricesTomorrow || pricesTomorrow.prices.length === 0)
+            return LL.TOMORROW_NO_DATA()
+
+        const date = DateTime.fromISO(pricesTomorrow.prices[0].dateTime)
+            .setZone("Europe/Madrid")
+            .toFormat("dd/MM")
+
         switch (pricesTomorrow?.dayRating) {
             case DayRating.BAD:
-                return "MALO"
+                return LL.TOMORROW_RATING_BAD({
+                    currentDate: date,
+                })
             case DayRating.GOOD:
-                return "BUENO"
+                return LL.TOMORROW_RATING_GOOD({
+                    currentDate: date,
+                })
             default:
-                return "NORMAL"
+                return LL.TOMORROW_RATING_NORMAL({
+                    currentDate: date,
+                })
         }
-    }, [pricesTomorrow])
+    }, [pricesTomorrow, LL])
 
     return (
         <Box
@@ -202,12 +223,7 @@ const DashboardContent: React.FC = () => {
                         component="h2"
                         align="left"
                         gutterBottom>
-                        {LL.TODAY_RATING({
-                            currentDate: currentDate
-                                .setZone("Europe/Madrid")
-                                .toFormat("dd/MM"),
-                            rating: todayRating,
-                        })}
+                        {todayRatingText}
                     </Typography>
                 </Container>
 
@@ -293,16 +309,7 @@ const DashboardContent: React.FC = () => {
                         component="h2"
                         align="left"
                         gutterBottom>
-                        {pricesTomorrow && pricesTomorrow.prices.length > 0
-                            ? LL.TOMORROW_RATING({
-                                  currentDate: DateTime.fromISO(
-                                      pricesTomorrow.prices[0].dateTime,
-                                  )
-                                      .setZone("Europe/Madrid")
-                                      .toFormat("dd/MM"),
-                                  rating: tomorrowRating,
-                              })
-                            : LL.TOMORROW_NO_DATA()}
+                        {tomorrowRatingText}
                     </Typography>
                 </Container>
 
