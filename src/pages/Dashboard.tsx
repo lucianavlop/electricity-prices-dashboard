@@ -27,7 +27,7 @@ const DashboardContent: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             const prices = await getDailyPriceInfo(currentDate)
-            if (prices.prices.length === 0) return
+            if (prices === null) return
             setPricesToday(prices)
         }
         fetchData()
@@ -38,7 +38,7 @@ const DashboardContent: React.FC = () => {
             const tomorrow = currentDate.plus({ days: 1 })
 
             const prices = await getDailyPriceInfo(tomorrow)
-            if (prices.prices.length === 0) {
+            if (prices === null) {
                 setPricesTomorrow(null)
             } else {
                 const last = prices.prices[prices.prices.length - 1]

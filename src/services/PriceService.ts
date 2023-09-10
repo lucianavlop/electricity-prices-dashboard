@@ -10,22 +10,35 @@ export const getPrices = async (
     start: DateTime,
     end: DateTime,
 ): Promise<Price[]> => {
-    const start_day = start.toFormat("yyyy-MM-dd")
-    const end_day = end.toFormat("yyyy-MM-dd")
+    const startDay = start.toFormat("yyyy-MM-dd")
+    const endDay = end.toFormat("yyyy-MM-dd")
 
     const response = await axios.get<Price[]>(
-        `${PRICES_API}?start=${start_day}&end=${end_day}`,
+        `${PRICES_API}?start=${startDay}&end=${endDay}`,
     )
     return response.data
 }
 
 export const getDailyPriceInfo = async (
     date: DateTime,
-): Promise<DailyPriceInfo> => {
+): Promise<DailyPriceInfo | null> => {
     const dateStr = date.toFormat("yyyy-MM-dd")
 
-    const response = await axios.get<DailyPriceInfo>(
-        `${PRICES_API}/dailyinfo/${dateStr}`,
-    )
-    return response.data
+    try {
+        const response = await axios.get<DailyPriceInfo>(
+            `${PRICES_API}/dailyinfo?date=${dateStr}`,
+        )
+        return response.data
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+                console.error("Resource not found.")
+            } else {
+                console.error(`An error occurred: ${error.response?.status}`)
+            }
+        } else {
+            console.error("An unknown error occurred.")
+        }
+        return null
+    }
 }
