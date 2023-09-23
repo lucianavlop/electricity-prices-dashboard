@@ -1,6 +1,6 @@
 {
   "name": "daithi-dashboard",
-  "version": "2.3.4",
+  "version": "2.4.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -20,6 +20,7 @@
     "chartjs-adapter-moment": "^1.0.1",
     "chartjs-plugin-annotation": "^3.0.1",
     "luxon": "^3.4.2",
+    "mixpanel-browser": "^2.47.0",
     "prettier": "^3.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -64,6 +65,7 @@
     "@babel/preset-env": "^7.22.14",
     "@babel/preset-react": "^7.22.5",
     "@babel/preset-typescript": "^7.22.11",
+    "@types/mixpanel-browser": "^2.47.1",
     "babel-jest": "^29.6.4"
   }
 }
