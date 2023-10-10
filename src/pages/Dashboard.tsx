@@ -3,7 +3,6 @@ import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
 import DailyChart from "components/PriceChart"
-import { DateTime } from "luxon"
 import { Price } from "models/Price"
 import { getDailyPriceInfo, getPrices } from "services/PriceService"
 import { calculateAverage } from "utils/PriceUtils"
@@ -12,12 +11,12 @@ import Metric from "components/Metric"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { DayRating } from "models/DayRating"
 import { useI18nContext } from "i18n/i18n-react"
+import { useDateTime } from "hooks/RegionalDateTime"
 
 const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
-    const [currentDate, setCurrentDate] = useState(
-        DateTime.now().setZone("Europe/Madrid"),
-    )
+    const { now, fromISO } = useDateTime()
+    const [currentDate, setCurrentDate] = useState(now())
     const [pricesToday, setPricesToday] = useState<DailyPriceInfo | null>(null)
     const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
         null,
@@ -64,14 +63,12 @@ const DashboardContent: React.FC = () => {
     }, [currentDate])
 
     useEffect(() => {
-        // Set date to 3 days ago
-        const fetchData = () =>
-            setCurrentDate(DateTime.now().setZone("Europe/Madrid"))
+        const fetchData = () => setCurrentDate(now())
         // Calculate time remaining until the start of the next hour
-        const now = DateTime.now().setZone("Europe/Madrid")
-        const nextHour = now.startOf("hour").plus({ hour: 1 })
+        const currTime = now()
+        const nextHour = currTime.startOf("hour").plus({ hour: 1 })
         const millisecondsUntilNextHour = nextHour.diff(
-            now,
+            currTime,
             "milliseconds",
         ).milliseconds
 
@@ -92,7 +89,7 @@ const DashboardContent: React.FC = () => {
         return () => {
             clearTimeout(timeoutId)
         }
-    }, [])
+    }, [now])
 
     const median = useMemo(
         () => calculateAverage(pricesThirtyDays),
@@ -102,14 +99,12 @@ const DashboardContent: React.FC = () => {
     const currentPrice = useMemo(() => {
         return (
             pricesToday?.prices.find(price => {
-                const priceDateTimeInMadrid = DateTime.fromISO(
-                    price.dateTime,
-                ).setZone("Europe/Madrid")
+                const priceDateTimeInMadrid = fromISO(price.dateTime)
 
                 return currentDate.hasSame(priceDateTimeInMadrid, "hour")
             }) ?? null
         )
-    }, [pricesToday, currentDate])
+    }, [pricesToday?.prices, fromISO, currentDate])
 
     const minPriceToday = useMemo(() => {
         if (!pricesToday) return null
@@ -153,7 +148,7 @@ const DashboardContent: React.FC = () => {
     }, [pricesThirtyDays])
 
     const todayRatingText = useMemo(() => {
-        const date = currentDate.setZone("Europe/Madrid").toFormat("dd/MM")
+        const date = currentDate.toFormat("dd/MM")
 
         switch (pricesToday?.dayRating) {
             case DayRating.BAD:
@@ -175,9 +170,9 @@ const DashboardContent: React.FC = () => {
         if (!pricesTomorrow || pricesTomorrow.prices.length === 0)
             return LL.TOMORROW_NO_DATA()
 
-        const date = DateTime.fromISO(pricesTomorrow.prices[0].dateTime)
-            .setZone("Europe/Madrid")
-            .toFormat("dd/MM")
+        const date = fromISO(pricesTomorrow.prices[0].dateTime).toFormat(
+            "dd/MM",
+        )
 
         switch (pricesTomorrow?.dayRating) {
             case DayRating.BAD:
@@ -193,7 +188,7 @@ const DashboardContent: React.FC = () => {
                     currentDate: date,
                 })
         }
-    }, [pricesTomorrow, LL])
+    }, [pricesTomorrow, LL, fromISO])
 
     return (
         <Box
@@ -232,9 +227,7 @@ const DashboardContent: React.FC = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <Metric
                                 label={LL.CURRENT_PRICE({
-                                    currentTime: currentDate
-                                        .setZone("Europe/Madrid")
-                                        .toFormat("HH:mm"),
+                                    currentTime: currentDate.toFormat("HH:mm"),
                                 })}
                                 value={currentPrice?.price ?? 0}
                                 delta={
@@ -248,11 +241,9 @@ const DashboardContent: React.FC = () => {
                             <Metric
                                 label={LL.MIN_PRICE({
                                     minPrice: minPriceToday
-                                        ? DateTime.fromISO(
+                                        ? fromISO(
                                               minPriceToday.dateTime,
-                                          )
-                                              .setZone("Europe/Madrid")
-                                              .toFormat("HH:mm")
+                                          ).toFormat("HH:mm")
                                         : "",
                                 })}
                                 value={minPriceToday ? minPriceToday.price : 0}
@@ -266,11 +257,9 @@ const DashboardContent: React.FC = () => {
                             <Metric
                                 label={LL.MAX_PRICE({
                                     maxPrice: maxPriceToday
-                                        ? DateTime.fromISO(
+                                        ? fromISO(
                                               maxPriceToday.dateTime,
-                                          )
-                                              .setZone("Europe/Madrid")
-                                              .toFormat("HH:mm")
+                                          ).toFormat("HH:mm")
                                         : "",
                                 })}
                                 value={maxPriceToday ? maxPriceToday.price : 0}
@@ -320,11 +309,9 @@ const DashboardContent: React.FC = () => {
                                 <Metric
                                     label={LL.MIN_PRICE({
                                         minPrice: minPriceTomorrow
-                                            ? DateTime.fromISO(
+                                            ? fromISO(
                                                   minPriceTomorrow.dateTime,
-                                              )
-                                                  .setZone("Europe/Madrid")
-                                                  .toFormat("HH:mm")
+                                              ).toFormat("HH:mm")
                                             : "",
                                     })}
                                     value={
@@ -344,11 +331,9 @@ const DashboardContent: React.FC = () => {
                                 <Metric
                                     label={LL.MAX_PRICE({
                                         maxPrice: maxPriceTomorrow
-                                            ? DateTime.fromISO(
+                                            ? fromISO(
                                                   maxPriceTomorrow.dateTime,
-                                              )
-                                                  .setZone("Europe/Madrid")
-                                                  .toFormat("HH:mm")
+                                              ).toFormat("HH:mm")
                                             : "",
                                     })}
                                     value={

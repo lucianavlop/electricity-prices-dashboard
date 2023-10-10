@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { DateTime } from "luxon"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
@@ -7,6 +6,7 @@ import { useTheme } from "@mui/material/styles"
 import { Pair } from "models/DailyPriceInfo"
 import { filterAndPadPrices } from "utils/PriceUtils"
 import { useI18nContext } from "i18n/i18n-react"
+import { useDateTime } from "hooks/RegionalDateTime"
 
 Chart.register(Annotation)
 
@@ -40,6 +40,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     expensivePeriod,
 }) => {
     const { LL } = useI18nContext()
+    const { now, fromISO } = useDateTime()
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
     const chartRef = useRef<Chart | null>(null)
@@ -53,16 +54,11 @@ const DailyChart: React.FC<DailyChartProps> = ({
             const canvasWidth = prices.length - 1
 
             // Use Luxon's DateTime objects with Europe/Madrid timezone
-            const startTime = DateTime.fromISO(prices[0].dateTime, {
-                zone: "Europe/Madrid",
-            }).toMillis()
-            const endTime = DateTime.fromISO(
+            const startTime = fromISO(prices[0].dateTime).toMillis()
+            const endTime = fromISO(
                 prices[prices.length - 1].dateTime,
-                { zone: "Europe/Madrid" },
             ).toMillis()
-            const currentTime = DateTime.now()
-                .setZone("Europe/Madrid")
-                .toMillis()
+            const currentTime = now().toMillis()
 
             if (currentTime < startTime || currentTime > endTime)
                 return setCurrentPriceLocation(-1)
@@ -83,7 +79,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return () => {
             clearInterval(intervalId)
         }
-    }, [prices, showCurrentPrice])
+    }, [fromISO, now, prices, showCurrentPrice])
 
     const chartOptions = useMemo(() => {
         const chartOptions: ChartOptions = {
@@ -204,9 +200,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
         return {
             labels: paddedPrices.map(item =>
-                DateTime.fromISO(item.dateTime, {
-                    zone: "Europe/Madrid",
-                }).toFormat(dateFormat),
+                fromISO(item.dateTime).toFormat(dateFormat),
             ),
             datasets: [
                 {
@@ -277,13 +271,17 @@ const DailyChart: React.FC<DailyChartProps> = ({
             ],
         }
     }, [
-        averageDataset,
-        cheapestPeriodsPadded,
-        dateFormat,
-        expensivePeriodPadded,
         paddedPrices,
-        theme,
+        cheapestPeriodsPadded,
+        theme.palette.success.main,
+        theme.palette.error.main,
+        theme.palette.info.main,
+        theme.palette.secondary.main,
+        expensivePeriodPadded,
         LL,
+        averageDataset,
+        fromISO,
+        dateFormat,
     ])
 
     useEffect(() => {
