@@ -3,7 +3,6 @@ import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
-import { Pair } from "models/DailyPriceInfo"
 import { filterAndPadPrices } from "utils/PriceUtils"
 import { useI18nContext } from "i18n/i18n-react"
 import { useDateTime } from "hooks/RegionalDateTime"
@@ -26,8 +25,8 @@ export interface DailyChartProps {
     chartId: string
     dateFormat: string
     showCurrentPrice: boolean
-    cheapestPeriods: Pair<Price[]>
-    expensivePeriod: Price[]
+    cheapestPeriods: Price[][]
+    expensivePeriods: Price[][]
 }
 
 const DailyChart: React.FC<DailyChartProps> = ({
@@ -37,7 +36,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
     dateFormat,
     showCurrentPrice,
     cheapestPeriods,
-    expensivePeriod,
+    expensivePeriods,
 }) => {
     const { LL } = useI18nContext()
     const { now, fromISO } = useDateTime()
@@ -168,17 +167,15 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return chartOptions
     }, [currentPriceLocation, theme])
 
-    const cheapestPeriodsPadded = useMemo(() => {
-        return [
-            filterAndPadPrices(cheapestPeriods.first),
-            filterAndPadPrices(cheapestPeriods.second),
-        ]
-    }, [cheapestPeriods])
+    const cheapestPeriodsPadded = useMemo(
+        () => cheapestPeriods.map(period => filterAndPadPrices(period)),
+        [cheapestPeriods],
+    )
 
-    const expensivePeriodPadded = useMemo(
-        () => filterAndPadPrices(expensivePeriod),
+    const expensivePeriodsPadded = useMemo(
+        () => expensivePeriods.map(period => filterAndPadPrices(period)),
 
-        [expensivePeriod],
+        [expensivePeriods],
     )
 
     const paddedPrices = useMemo(() => {
@@ -198,77 +195,72 @@ const DailyChart: React.FC<DailyChartProps> = ({
     )
 
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
+        const datasets = []
+
+        cheapestPeriodsPadded.forEach((period, index) => {
+            datasets.push(
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+            )
+        })
+
+        expensivePeriodsPadded.forEach((period, index) => {
+            datasets.push(
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+            )
+        })
+
+        datasets.push(
+            {
+                label: LL.PRICE(),
+                data: paddedPrices.map(item => item.price),
+                borderColor: theme.palette.info.main,
+                backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
+                pointRadius: 0,
+            },
+            {
+                label: LL.THIRTY_DAY_AVG(),
+                data: averageDataset,
+                borderColor: theme.palette.secondary.main,
+                backgroundColor: hexToRGBA(theme.palette.secondary.main, 0.2),
+                pointRadius: 0,
+            },
+        )
+
         return {
             labels: paddedPrices.map(item =>
                 fromISO(item.dateTime).toFormat(dateFormat),
             ),
-            datasets: [
-                {
-                    label: "Hide",
-                    data: cheapestPeriodsPadded[0],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapestPeriodsPadded[0],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapestPeriodsPadded[1],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapestPeriodsPadded[1],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: expensivePeriodPadded,
-                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: expensivePeriodPadded,
-                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: LL.PRICE(),
-                    data: paddedPrices.map(item => item.price),
-                    borderColor: theme.palette.info.main,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
-                    pointRadius: 0,
-                },
-                {
-                    label: LL.THIRTY_DAY_AVG(),
-                    data: averageDataset,
-                    borderColor: theme.palette.secondary.main,
-                    backgroundColor: hexToRGBA(
-                        theme.palette.secondary.main,
-                        0.2,
-                    ),
-                    pointRadius: 0,
-                },
-            ],
+            datasets: datasets,
         }
     }, [
         paddedPrices,
@@ -277,7 +269,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         theme.palette.error.main,
         theme.palette.info.main,
         theme.palette.secondary.main,
-        expensivePeriodPadded,
+        expensivePeriodsPadded,
         LL,
         averageDataset,
         fromISO,

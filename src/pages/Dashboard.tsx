@@ -287,7 +287,7 @@ const DashboardContent: React.FC = () => {
                             dateFormat="HH:mm"
                             showCurrentPrice={true}
                             cheapestPeriods={pricesToday.cheapestPeriods}
-                            expensivePeriod={pricesToday.expensivePeriod}
+                            expensivePeriods={pricesToday.expensivePeriods}
                         />
                     )}
                 </Container>
@@ -362,7 +362,7 @@ const DashboardContent: React.FC = () => {
                             dateFormat="HH:mm"
                             showCurrentPrice={true}
                             cheapestPeriods={pricesTomorrow.cheapestPeriods}
-                            expensivePeriod={pricesTomorrow.expensivePeriod}
+                            expensivePeriods={pricesTomorrow.expensivePeriods}
                         />
                     </Container>
                 )}
@@ -383,8 +383,8 @@ const DashboardContent: React.FC = () => {
                         chartId="DailyMedians"
                         dateFormat="MMM dd"
                         showCurrentPrice={false}
-                        cheapestPeriods={{ first: [], second: [] }}
-                        expensivePeriod={[]}
+                        cheapestPeriods={[]}
+                        expensivePeriods={[]}
                     />
                 </Container>
             </Paper>
