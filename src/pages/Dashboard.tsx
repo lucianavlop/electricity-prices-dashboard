@@ -39,7 +39,7 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const tomorrow = currentDate.plus({ days: 1 })
+            const tomorrow = now().plus({ days: 1 })
 
             const prices = await getDailyPriceInfo(tomorrow)
             if (prices === null) {
@@ -54,7 +54,7 @@ const DashboardContent: React.FC = () => {
             }
         }
         fetchData()
-    }, [currentDate])
+    }, [now])
 
     useEffect(() => {
         const fetchData = async () => {
