@@ -2,9 +2,9 @@ import type { BaseTranslation } from "../i18n-types"
 
 const es = {
     TITLE: "Precios de la electricidad",
-    TODAY_RATING_GOOD: "Hoy {currentDate:string} es un día BUENO",
-    TODAY_RATING_BAD: "Hoy {currentDate:string} es un día MALO",
-    TODAY_RATING_NORMAL: "Hoy {currentDate:string} es un día NORMAL",
+    CURRENT_RATING_GOOD: "{currentDate:string} es un día BUENO",
+    CURRENT_RATING_BAD: "{currentDate:string} es un día MALO",
+    CURRENT_RATING_NORMAL: "{currentDate:string} es un día NORMAL",
     CURRENT_PRICE: "Precio actual - {currentTime:string}",
     MIN_PRICE: "Precio min - {minPrice:string}",
     MAX_PRICE: "Precio max - {maxPrice:string}",

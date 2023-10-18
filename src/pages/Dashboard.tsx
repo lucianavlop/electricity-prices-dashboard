@@ -12,12 +12,17 @@ import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { DayRating } from "models/DayRating"
 import { useI18nContext } from "i18n/i18n-react"
 import { useDateTime } from "hooks/RegionalDateTime"
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
+import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon"
+import { DateTime } from "luxon"
 
 const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
     const { now, fromISO } = useDateTime()
     const [currentDate, setCurrentDate] = useState(now())
-    const [pricesToday, setPricesToday] = useState<DailyPriceInfo | null>(null)
+    const [currentPrices, setPricesToday] = useState<DailyPriceInfo | null>(
+        null,
+    )
     const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
         null,
     )
@@ -91,6 +96,11 @@ const DashboardContent: React.FC = () => {
         }
     }, [now])
 
+    const isToday = useMemo(
+        () => currentDate.hasSame(now(), "day"),
+        [currentDate, now],
+    )
+
     const median = useMemo(
         () => calculateAverage(pricesThirtyDays),
         [pricesThirtyDays],
@@ -98,25 +108,25 @@ const DashboardContent: React.FC = () => {
 
     const currentPrice = useMemo(() => {
         return (
-            pricesToday?.prices.find(price => {
+            currentPrices?.prices.find(price => {
                 const priceDateTimeInMadrid = fromISO(price.dateTime)
 
                 return currentDate.hasSame(priceDateTimeInMadrid, "hour")
             }) ?? null
         )
-    }, [pricesToday?.prices, fromISO, currentDate])
+    }, [currentPrices?.prices, fromISO, currentDate])
 
     const minPriceToday = useMemo(() => {
-        if (!pricesToday) return null
-        const min = Math.min(...pricesToday.prices.map(price => price.price))
-        return pricesToday.prices.find(price => price.price === min)
-    }, [pricesToday])
+        if (!currentPrices) return null
+        const min = Math.min(...currentPrices.prices.map(price => price.price))
+        return currentPrices.prices.find(price => price.price === min)
+    }, [currentPrices])
 
     const maxPriceToday = useMemo(() => {
-        if (!pricesToday) return null
-        const max = Math.max(...pricesToday.prices.map(price => price.price))
-        return pricesToday.prices.find(price => price.price === max)
-    }, [pricesToday])
+        if (!currentPrices) return null
+        const max = Math.max(...currentPrices.prices.map(price => price.price))
+        return currentPrices.prices.find(price => price.price === max)
+    }, [currentPrices])
 
     const minPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
@@ -147,24 +157,24 @@ const DashboardContent: React.FC = () => {
         return medians
     }, [pricesThirtyDays])
 
-    const todayRatingText = useMemo(() => {
+    const currentRatingText = useMemo(() => {
         const date = currentDate.toFormat("dd/MM")
 
-        switch (pricesToday?.dayRating) {
+        switch (currentPrices?.dayRating) {
             case DayRating.BAD:
-                return LL.TODAY_RATING_BAD({
+                return LL.CURRENT_RATING_BAD({
                     currentDate: date,
                 })
             case DayRating.GOOD:
-                return LL.TODAY_RATING_GOOD({
+                return LL.CURRENT_RATING_GOOD({
                     currentDate: date,
                 })
             default:
-                return LL.TODAY_RATING_NORMAL({
+                return LL.CURRENT_RATING_NORMAL({
                     currentDate: date,
                 })
         }
-    }, [pricesToday, currentDate, LL])
+    }, [currentPrices, currentDate, LL])
 
     const tomorrowRatingText = useMemo(() => {
         if (!pricesTomorrow || pricesTomorrow.prices.length === 0)
@@ -190,6 +200,12 @@ const DashboardContent: React.FC = () => {
         }
     }, [pricesTomorrow, LL, fromISO])
 
+    const handleDateChange = (date: DateTime | null) => {
+        if (date) {
+            setCurrentDate(date)
+        }
+    }
+
     return (
         <Box
             component="main"
@@ -212,31 +228,46 @@ const DashboardContent: React.FC = () => {
                         gutterBottom>
                         {LL.TITLE()}
                     </Typography>
+                </Container>
 
+                <Container sx={{ p: 2 }}>
+                    <LocalizationProvider dateAdapter={AdapterLuxon}>
+                        <DatePicker
+                            value={currentDate}
+                            onChange={handleDateChange}
+                            maxDate={now()}
+                            format="dd/MM/yyyy"
+                        />
+                    </LocalizationProvider>
+                </Container>
+                <Container sx={{ p: 2 }}>
                     <Typography
                         variant="h2"
                         component="h2"
                         align="left"
                         gutterBottom>
-                        {todayRatingText}
+                        {currentRatingText}
                     </Typography>
                 </Container>
 
                 <Container sx={{ p: 2 }}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={LL.CURRENT_PRICE({
-                                    currentTime: currentDate.toFormat("HH:mm"),
-                                })}
-                                value={currentPrice?.price ?? 0}
-                                delta={
-                                    currentPrice
-                                        ? median - currentPrice.price
-                                        : 0
-                                }
-                            />
-                        </Grid>
+                        {isToday && (
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Metric
+                                    label={LL.CURRENT_PRICE({
+                                        currentTime:
+                                            currentDate.toFormat("HH:mm"),
+                                    })}
+                                    value={currentPrice?.price ?? 0}
+                                    delta={
+                                        currentPrice
+                                            ? median - currentPrice.price
+                                            : 0
+                                    }
+                                />
+                            </Grid>
+                        )}
                         <Grid item xs={12} sm={6} md={3}>
                             <Metric
                                 label={LL.MIN_PRICE({
@@ -279,15 +310,15 @@ const DashboardContent: React.FC = () => {
                 </Container>
 
                 <Container sx={{ p: 2, height: "400px" }}>
-                    {pricesToday && (
+                    {currentPrices && (
                         <DailyChart
-                            prices={pricesToday.prices}
+                            prices={currentPrices.prices}
                             median={median}
                             chartId="Today"
                             dateFormat="HH:mm"
-                            showCurrentPrice={true}
-                            cheapestPeriods={pricesToday.cheapestPeriods}
-                            expensivePeriods={pricesToday.expensivePeriods}
+                            showCurrentPrice={isToday}
+                            cheapestPeriods={currentPrices.cheapestPeriods}
+                            expensivePeriods={currentPrices.expensivePeriods}
                         />
                     )}
                 </Container>

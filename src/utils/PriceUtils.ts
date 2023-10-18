@@ -15,19 +15,12 @@ export const formatEuro = (amount: number): string => {
     }).format(amount)
 }
 
-export const filterAndPadPrices = (
-    period: Price[],
-    now = new Date(),
-): (number | null)[] => {
+export const padPrices = (period: Price[]): (number | null)[] => {
     if (period.length < 1) return []
 
     // If the period has passed return empty array
     const endOfPeriod = new Date(period[period.length - 1].dateTime)
     endOfPeriod.setMinutes(59)
-
-    if (endOfPeriod.getTime() < now.getTime()) {
-        return []
-    }
 
     const paddedArray = Array.from({ length: 24 }, (_, i) => i)
         .map(priceHour => {
