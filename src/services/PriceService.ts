@@ -3,8 +3,9 @@ import { DateTime } from "luxon"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { Price } from "models/Price"
 
-const PRICES_API = "https://elec-api.daithiapp.com/api/v1/price"
-// const PRICES_API = "http://localhost:8080/api/v1/price"
+const PRICES_API =
+    process.env.REACT_APP_API_URL ??
+    "https://elec-api.daithiapp.com/api/v1/price"
 
 export const getPrices = async (
     start: DateTime,
