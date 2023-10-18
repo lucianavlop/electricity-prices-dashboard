@@ -19,20 +19,20 @@ type RootTranslation = {
 	 */
 	TITLE: string
 	/**
-	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​B​U​E​N​O
+	 * {​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​B​U​E​N​O
 	 * @param {string} currentDate
 	 */
-	TODAY_RATING_GOOD: RequiredParams<'currentDate'>
+	CURRENT_RATING_GOOD: RequiredParams<'currentDate'>
 	/**
-	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​M​A​L​O
+	 * {​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​M​A​L​O
 	 * @param {string} currentDate
 	 */
-	TODAY_RATING_BAD: RequiredParams<'currentDate'>
+	CURRENT_RATING_BAD: RequiredParams<'currentDate'>
 	/**
-	 * H​o​y​ ​{​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​N​O​R​M​A​L
+	 * {​c​u​r​r​e​n​t​D​a​t​e​}​ ​e​s​ ​u​n​ ​d​í​a​ ​N​O​R​M​A​L
 	 * @param {string} currentDate
 	 */
-	TODAY_RATING_NORMAL: RequiredParams<'currentDate'>
+	CURRENT_RATING_NORMAL: RequiredParams<'currentDate'>
 	/**
 	 * P​r​e​c​i​o​ ​a​c​t​u​a​l​ ​-​ ​{​c​u​r​r​e​n​t​T​i​m​e​}
 	 * @param {string} currentTime
@@ -87,17 +87,17 @@ export type TranslationFunctions = {
 	 */
 	TITLE: () => LocalizedString
 	/**
-	 * Hoy {currentDate} es un día BUENO
+	 * {currentDate} es un día BUENO
 	 */
-	TODAY_RATING_GOOD: (arg: { currentDate: string }) => LocalizedString
+	CURRENT_RATING_GOOD: (arg: { currentDate: string }) => LocalizedString
 	/**
-	 * Hoy {currentDate} es un día MALO
+	 * {currentDate} es un día MALO
 	 */
-	TODAY_RATING_BAD: (arg: { currentDate: string }) => LocalizedString
+	CURRENT_RATING_BAD: (arg: { currentDate: string }) => LocalizedString
 	/**
-	 * Hoy {currentDate} es un día NORMAL
+	 * {currentDate} es un día NORMAL
 	 */
-	TODAY_RATING_NORMAL: (arg: { currentDate: string }) => LocalizedString
+	CURRENT_RATING_NORMAL: (arg: { currentDate: string }) => LocalizedString
 	/**
 	 * Precio actual - {currentTime}
 	 */

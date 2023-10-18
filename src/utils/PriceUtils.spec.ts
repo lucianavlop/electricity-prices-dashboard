@@ -1,12 +1,12 @@
-import { filterAndPadPrices } from "./PriceUtils"
+import { padPrices } from "./PriceUtils"
 import prices20230513 from "test/data/prices20230513.json"
 
-describe("filterAndPadPrices", () => {
+describe("padPrices", () => {
     test("should return empty array if prices is empty", () => {
-        expect(filterAndPadPrices([])).toEqual([])
+        expect(padPrices([])).toEqual([])
     })
 
     test("If the period has passed return null array", () => {
-        expect(filterAndPadPrices(prices20230513)).toEqual([])
+        expect(padPrices(prices20230513)).toEqual([])
     })
 })

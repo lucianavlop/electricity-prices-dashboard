@@ -3,7 +3,7 @@ import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
-import { filterAndPadPrices } from "utils/PriceUtils"
+import { padPrices } from "utils/PriceUtils"
 import { useI18nContext } from "i18n/i18n-react"
 import { useDateTime } from "hooks/RegionalDateTime"
 
@@ -168,12 +168,12 @@ const DailyChart: React.FC<DailyChartProps> = ({
     }, [currentPriceLocation, theme])
 
     const cheapestPeriodsPadded = useMemo(
-        () => cheapestPeriods.map(period => filterAndPadPrices(period)),
+        () => cheapestPeriods.map(period => padPrices(period)),
         [cheapestPeriods],
     )
 
     const expensivePeriodsPadded = useMemo(
-        () => expensivePeriods.map(period => filterAndPadPrices(period)),
+        () => expensivePeriods.map(period => padPrices(period)),
 
         [expensivePeriods],
     )
