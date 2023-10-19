@@ -2,10 +2,8 @@ import React, { useEffect, useMemo, useState } from "react"
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
-import DailyChart from "components/PriceChart"
-import { Price } from "models/Price"
-import { getDailyPriceInfo, getPrices } from "services/PriceService"
-import { calculateAverage } from "utils/PriceUtils"
+import PriceChart from "components/PriceChart"
+import { getDailyPriceInfo, getDailyMedians } from "services/PriceService"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
@@ -15,6 +13,8 @@ import { useDateTime } from "hooks/RegionalDateTime"
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon"
 import { DateTime } from "luxon"
+import { DailyMedian } from "models/DailyMedian"
+import DailyMedianChart from "components/DailyMedianChart"
 
 const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
@@ -26,7 +26,7 @@ const DashboardContent: React.FC = () => {
     const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
         null,
     )
-    const [pricesThirtyDays, setPricesThirtyDays] = useState<Price[]>([])
+    const [dailyMedians, setDailyMedians] = useState<DailyMedian[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,11 +58,9 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const thirtyDaysAgo = currentDate.minus({ days: 30 })
+            const medians = await getDailyMedians(currentDate)
 
-            const prices = await getPrices(thirtyDaysAgo, currentDate)
-
-            setPricesThirtyDays(prices)
+            if (medians) setDailyMedians(medians)
         }
         fetchData()
     }, [currentDate])
@@ -101,10 +99,14 @@ const DashboardContent: React.FC = () => {
         [currentDate, now],
     )
 
-    const median = useMemo(
-        () => calculateAverage(pricesThirtyDays),
-        [pricesThirtyDays],
-    )
+    const median = useMemo(() => {
+        return (
+            dailyMedians.reduce(
+                (accumulator, med) => accumulator + med.median,
+                0,
+            ) / dailyMedians.length
+        )
+    }, [dailyMedians])
 
     const currentPrice = useMemo(() => {
         return (
@@ -139,23 +141,6 @@ const DashboardContent: React.FC = () => {
         const max = Math.max(...pricesTomorrow.prices.map(price => price.price))
         return pricesTomorrow.prices.find(price => price.price === max)
     }, [pricesTomorrow])
-
-    const dailyMedians = useMemo(() => {
-        const medians: Price[] = []
-
-        if (pricesThirtyDays.length % 24 !== 0)
-            throw Error(
-                `Expected prices to be a multiple of 24 but got ${pricesThirtyDays.length}`,
-            )
-
-        for (let i = 0; i < pricesThirtyDays.length; i = i + 24) {
-            const prices = pricesThirtyDays.slice(i, i + 24)
-            const median = calculateAverage(prices)
-            medians.push({ price: median, dateTime: prices[0].dateTime })
-        }
-
-        return medians
-    }, [pricesThirtyDays])
 
     const currentRatingText = useMemo(() => {
         const date = currentDate.toFormat("dd/MM")
@@ -311,7 +296,7 @@ const DashboardContent: React.FC = () => {
 
                 <Container sx={{ p: 2, height: "400px" }}>
                     {currentPrices && (
-                        <DailyChart
+                        <PriceChart
                             prices={currentPrices.prices}
                             median={median}
                             chartId="Today"
@@ -386,7 +371,7 @@ const DashboardContent: React.FC = () => {
 
                 {pricesTomorrow && (
                     <Container sx={{ p: 2, height: "400px" }}>
-                        <DailyChart
+                        <PriceChart
                             prices={pricesTomorrow.prices}
                             median={median}
                             chartId="Tomorrow"
@@ -408,14 +393,11 @@ const DashboardContent: React.FC = () => {
                     </Typography>
                 </Container>
                 <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyChart
-                        prices={dailyMedians}
+                    <DailyMedianChart
+                        medians={dailyMedians}
                         median={median}
                         chartId="DailyMedians"
                         dateFormat="MMM dd"
-                        showCurrentPrice={false}
-                        cheapestPeriods={[]}
-                        expensivePeriods={[]}
                     />
                 </Container>
             </Paper>

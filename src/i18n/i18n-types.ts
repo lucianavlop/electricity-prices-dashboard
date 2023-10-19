@@ -79,6 +79,10 @@ type RootTranslation = {
 	 * P​r​e​c​i​o
 	 */
 	PRICE: string
+	/**
+	 * M​e​d​i​a​n​a
+	 */
+	MEDIAN: string
 }
 
 export type TranslationFunctions = {
@@ -138,6 +142,10 @@ export type TranslationFunctions = {
 	 * Precio
 	 */
 	PRICE: () => LocalizedString
+	/**
+	 * Mediana
+	 */
+	MEDIAN: () => LocalizedString
 }
 
 export type Formatters = {}

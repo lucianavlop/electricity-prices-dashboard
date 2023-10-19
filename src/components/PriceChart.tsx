@@ -19,7 +19,7 @@ const hexToRGBA = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export interface DailyChartProps {
+export interface PriceChartProps {
     prices: Price[]
     median: number
     chartId: string
@@ -29,7 +29,7 @@ export interface DailyChartProps {
     expensivePeriods: Price[][]
 }
 
-const DailyChart: React.FC<DailyChartProps> = ({
+const PriceChart: React.FC<PriceChartProps> = ({
     prices,
     median,
     chartId,
@@ -303,4 +303,4 @@ const DailyChart: React.FC<DailyChartProps> = ({
     return <canvas id={ID_PREFIX + chartId} />
 }
 
-export default DailyChart
+export default PriceChart

@@ -16,6 +16,7 @@ const es = {
         "Los datos de mañana aún no están disponibles. Los precios suelen estar disponibles después de las 20:30",
     LAST_THIRTY_DAYS: "Últimos 30 días",
     PRICE: "Precio",
+    MEDIAN: "Mediana",
 } satisfies BaseTranslation
 
 export default es
