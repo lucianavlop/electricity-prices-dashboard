@@ -20,12 +20,12 @@ const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
     const { now, fromISO } = useDateTime()
     const [currentDate, setCurrentDate] = useState(now())
-    const [currentPrices, setPricesToday] = useState<DailyPriceInfo | null>(
-        null,
-    )
-    const [pricesTomorrow, setPricesTomorrow] = useState<DailyPriceInfo | null>(
-        null,
-    )
+    const [currentPrices, setPricesToday] = useState<
+        DailyPriceInfo | undefined
+    >()
+    const [pricesTomorrow, setPricesTomorrow] = useState<
+        DailyPriceInfo | undefined
+    >()
     const [dailyMedians, setDailyMedians] = useState<DailyMedian[]>([])
 
     useEffect(() => {
@@ -42,7 +42,7 @@ const DashboardContent: React.FC = () => {
 
             const prices = await getDailyPriceInfo(tomorrow)
             if (prices === null) {
-                setPricesTomorrow(null)
+                setPricesTomorrow(undefined)
             } else {
                 const last = prices.prices[prices.prices.length - 1]
                 prices.prices.push({
@@ -120,25 +120,25 @@ const DashboardContent: React.FC = () => {
     const minPriceToday = useMemo(() => {
         if (!currentPrices) return null
         const min = Math.min(...currentPrices.prices.map(price => price.price))
-        return currentPrices.prices.find(price => price.price === min)
+        return currentPrices.prices.find(price => price.price === min) ?? null
     }, [currentPrices])
 
     const maxPriceToday = useMemo(() => {
         if (!currentPrices) return null
         const max = Math.max(...currentPrices.prices.map(price => price.price))
-        return currentPrices.prices.find(price => price.price === max)
+        return currentPrices.prices.find(price => price.price === max) ?? null
     }, [currentPrices])
 
     const minPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
         const min = Math.min(...pricesTomorrow.prices.map(price => price.price))
-        return pricesTomorrow.prices.find(price => price.price === min)
+        return pricesTomorrow.prices.find(price => price.price === min) ?? null
     }, [pricesTomorrow])
 
     const maxPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
         const max = Math.max(...pricesTomorrow.prices.map(price => price.price))
-        return pricesTomorrow.prices.find(price => price.price === max)
+        return pricesTomorrow.prices.find(price => price.price === max) ?? null
     }, [pricesTomorrow])
 
     const currentRatingText = useMemo(() => {
