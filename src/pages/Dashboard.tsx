@@ -3,7 +3,7 @@ import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
 import PriceChart from "components/PriceChart"
-import { getDailyPriceInfo, getDailyMedians } from "services/PriceService"
+import { getDailyPriceInfo, getDailyAverages } from "services/PriceService"
 import { Container, Grid } from "@mui/material"
 import Metric from "components/Metric"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
@@ -13,8 +13,8 @@ import { useDateTime } from "hooks/RegionalDateTime"
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon"
 import { DateTime } from "luxon"
-import { DailyMedian } from "models/DailyMedian"
-import DailyMedianChart from "components/DailyMedianChart"
+import { DailyAverage } from "models/DailyAverage"
+import DailyAverageChart from "components/DailyAverageChart"
 
 const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
@@ -26,7 +26,7 @@ const DashboardContent: React.FC = () => {
     const [pricesTomorrow, setPricesTomorrow] = useState<
         DailyPriceInfo | undefined
     >()
-    const [dailyMedians, setDailyMedians] = useState<DailyMedian[]>([])
+    const [dailyAverages, setDailyAverages] = useState<DailyAverage[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -57,9 +57,9 @@ const DashboardContent: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const medians = await getDailyMedians(currentDate)
+            const averages = await getDailyAverages(currentDate)
 
-            if (medians) setDailyMedians(medians)
+            if (averages) setDailyAverages(averages)
         }
         fetchData()
     }, [currentDate])
@@ -98,14 +98,14 @@ const DashboardContent: React.FC = () => {
         [currentDate, now],
     )
 
-    const median = useMemo(() => {
+    const average = useMemo(() => {
         return (
-            dailyMedians.reduce(
-                (accumulator, med) => accumulator + med.median,
+            dailyAverages.reduce(
+                (accumulator, med) => accumulator + med.average,
                 0,
-            ) / dailyMedians.length
+            ) / dailyAverages.length
         )
-    }, [dailyMedians])
+    }, [dailyAverages])
 
     const currentPrice = useMemo(() => {
         return (
@@ -246,7 +246,7 @@ const DashboardContent: React.FC = () => {
                                     value={currentPrice?.price ?? 0}
                                     delta={
                                         currentPrice
-                                            ? median - currentPrice.price
+                                            ? average - currentPrice.price
                                             : 0
                                     }
                                 />
@@ -263,7 +263,7 @@ const DashboardContent: React.FC = () => {
                                 })}
                                 value={minPriceToday ? minPriceToday.price : 0}
                                 delta={
-                                    median -
+                                    average -
                                     (minPriceToday ? minPriceToday.price : 0)
                                 }
                             />
@@ -279,7 +279,7 @@ const DashboardContent: React.FC = () => {
                                 })}
                                 value={maxPriceToday ? maxPriceToday.price : 0}
                                 delta={
-                                    median -
+                                    average -
                                     (maxPriceToday ? maxPriceToday.price : 0)
                                 }
                             />
@@ -287,7 +287,7 @@ const DashboardContent: React.FC = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <Metric
                                 label={LL.THIRTY_DAY_AVG()}
-                                value={median}
+                                value={average}
                             />
                         </Grid>
                     </Grid>
@@ -297,7 +297,7 @@ const DashboardContent: React.FC = () => {
                     {currentPrices && (
                         <PriceChart
                             prices={currentPrices.prices}
-                            median={median}
+                            average={average}
                             chartId="Today"
                             dateFormat="HH:mm"
                             showCurrentPrice={isToday}
@@ -335,7 +335,7 @@ const DashboardContent: React.FC = () => {
                                             : 0
                                     }
                                     delta={
-                                        median -
+                                        average -
                                         (minPriceTomorrow
                                             ? minPriceTomorrow.price
                                             : 0)
@@ -357,7 +357,7 @@ const DashboardContent: React.FC = () => {
                                             : 0
                                     }
                                     delta={
-                                        median -
+                                        average -
                                         (maxPriceTomorrow
                                             ? maxPriceTomorrow.price
                                             : 0)
@@ -372,7 +372,7 @@ const DashboardContent: React.FC = () => {
                     <Container sx={{ p: 2, height: "400px" }}>
                         <PriceChart
                             prices={pricesTomorrow.prices}
-                            median={median}
+                            average={average}
                             chartId="Tomorrow"
                             dateFormat="HH:mm"
                             showCurrentPrice={true}
@@ -392,10 +392,10 @@ const DashboardContent: React.FC = () => {
                     </Typography>
                 </Container>
                 <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyMedianChart
-                        medians={dailyMedians}
-                        median={median}
-                        chartId="DailyMedians"
+                    <DailyAverageChart
+                        averages={dailyAverages}
+                        average={average}
+                        chartId="DailyAverages"
                         dateFormat="MMM dd"
                     />
                 </Container>

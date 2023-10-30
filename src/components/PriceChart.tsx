@@ -21,7 +21,7 @@ const hexToRGBA = (hex: string, alpha: number) => {
 
 export interface PriceChartProps {
     prices: Price[]
-    median: number
+    average: number
     chartId: string
     dateFormat: string
     showCurrentPrice: boolean
@@ -31,7 +31,7 @@ export interface PriceChartProps {
 
 const PriceChart: React.FC<PriceChartProps> = ({
     prices,
-    median,
+    average,
     chartId,
     dateFormat,
     showCurrentPrice,
@@ -190,8 +190,8 @@ const PriceChart: React.FC<PriceChartProps> = ({
     }, [prices])
 
     const averageDataset = useMemo(
-        () => Array<number>(paddedPrices.length).fill(median),
-        [paddedPrices, median],
+        () => Array<number>(paddedPrices.length).fill(average),
+        [paddedPrices, average],
     )
 
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
