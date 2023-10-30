@@ -1,7 +1,7 @@
 import axios from "axios"
 import { DateTime } from "luxon"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
-import { DailyMedian } from "models/DailyMedian"
+import { DailyAverage } from "models/DailyAverage"
 
 const PRICES_API =
     process.env.REACT_APP_API_URL ??
@@ -31,14 +31,14 @@ export const getDailyPriceInfo = async (
     }
 }
 
-export const getDailyMedians = async (
+export const getDailyAverages = async (
     date: DateTime,
-): Promise<DailyMedian[] | null> => {
+): Promise<DailyAverage[] | null> => {
     const dateStr = date.toFormat("yyyy-MM-dd")
 
     try {
-        const response = await axios.get<DailyMedian[]>(
-            `${PRICES_API}/medians?date=${dateStr}`,
+        const response = await axios.get<DailyAverage[]>(
+            `${PRICES_API}/averages?date=${dateStr}`,
         )
         return response.data
     } catch (error) {

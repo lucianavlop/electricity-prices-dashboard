@@ -1,14 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef } from "react"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation from "chartjs-plugin-annotation"
 import { useTheme } from "@mui/material/styles"
 import { useI18nContext } from "i18n/i18n-react"
 import { useDateTime } from "hooks/RegionalDateTime"
-import { DailyMedian } from "models/DailyMedian"
+import { DailyAverage } from "models/DailyAverage"
 
 Chart.register(Annotation)
 
-export const ID_PREFIX = "median-chart-"
+export const ID_PREFIX = "average-chart-"
 
 const hexToRGBA = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -18,16 +18,16 @@ const hexToRGBA = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export interface DailyMedianChartProps {
-    medians: DailyMedian[]
-    median: number
+export interface DailyAverageChartProps {
+    averages: DailyAverage[]
+    average: number
     chartId: string
     dateFormat: string
 }
 
-const DailyMedianChart: React.FC<DailyMedianChartProps> = ({
-    medians,
-    median,
+const DailyAverageChart: React.FC<DailyAverageChartProps> = ({
+    averages,
+    average,
     chartId,
     dateFormat,
 }) => {
@@ -108,8 +108,8 @@ const DailyMedianChart: React.FC<DailyMedianChartProps> = ({
     }, [theme])
 
     const averageDataset = useMemo(
-        () => Array<number>(medians.length).fill(median),
-        [medians, median],
+        () => Array<number>(averages.length).fill(average),
+        [averages, average],
     )
 
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
@@ -118,7 +118,7 @@ const DailyMedianChart: React.FC<DailyMedianChartProps> = ({
         datasets.push(
             {
                 label: LL.MEDIAN(),
-                data: medians.map(item => item.median),
+                data: averages.map(item => item.average),
                 borderColor: theme.palette.info.main,
                 backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
                 pointRadius: 0,
@@ -133,14 +133,14 @@ const DailyMedianChart: React.FC<DailyMedianChartProps> = ({
         )
 
         return {
-            labels: medians.map(item =>
+            labels: averages.map(item =>
                 fromISO(item.date).toFormat(dateFormat),
             ),
             datasets: datasets,
         }
     }, [
         LL,
-        medians,
+        averages,
         theme.palette.info.main,
         theme.palette.secondary.main,
         averageDataset,
@@ -175,4 +175,4 @@ const DailyMedianChart: React.FC<DailyMedianChartProps> = ({
     return <canvas id={ID_PREFIX + chartId} />
 }
 
-export default DailyMedianChart
+export default DailyAverageChart

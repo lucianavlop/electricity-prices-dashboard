@@ -16,7 +16,7 @@ const en = {
         "Tomorrow's prices are not available yet. Prices are usually available after 20:30",
     LAST_THIRTY_DAYS: "Last 30 days",
     PRICE: "Price",
-    MEDIAN: "Median",
+    MEDIAN: "Average",
 } satisfies Translation
 
 export default en
