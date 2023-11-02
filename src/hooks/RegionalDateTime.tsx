@@ -15,8 +15,16 @@ export const useDateTime = (timezone: string = DEFAULT_TIMEZONE) => {
         [timezone],
     )
 
+    const endOfDay = useCallback(
+        (iso: string) => {
+            return fromISO(iso).endOf("day")
+        },
+        [fromISO],
+    )
+
     return {
         now,
         fromISO,
+        endOfDay,
     }
 }

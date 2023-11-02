@@ -44,11 +44,6 @@ const DashboardContent: React.FC = () => {
             if (prices === null) {
                 setPricesTomorrow(undefined)
             } else {
-                const last = prices.prices[prices.prices.length - 1]
-                prices.prices.push({
-                    price: last.price,
-                    dateTime: last.dateTime.slice(0, -8) + "24:00:00",
-                })
                 setPricesTomorrow(prices)
             }
         }

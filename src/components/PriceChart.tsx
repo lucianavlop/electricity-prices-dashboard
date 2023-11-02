@@ -39,7 +39,7 @@ const PriceChart: React.FC<PriceChartProps> = ({
     expensivePeriods,
 }) => {
     const { LL } = useI18nContext()
-    const { now, fromISO } = useDateTime()
+    const { now, fromISO, endOfDay } = useDateTime()
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
     const chartRef = useRef<Chart | null>(null)
@@ -180,14 +180,18 @@ const PriceChart: React.FC<PriceChartProps> = ({
 
     const paddedPrices = useMemo(() => {
         if (prices.length === 0) return []
+        if (prices.length > 24) return prices
         const last = prices[prices.length - 1]
         const pp = [...prices]
-        pp.push({
-            price: last.price,
-            dateTime: last.dateTime.slice(0, -8) + "24:00:00",
-        })
+        const eod = endOfDay(last.dateTime).toISO()
+        if (eod) {
+            pp.push({
+                price: last.price,
+                dateTime: eod,
+            })
+        }
         return pp
-    }, [prices])
+    }, [endOfDay, prices])
 
     const averageDataset = useMemo(
         () => Array<number>(paddedPrices.length).fill(average),
