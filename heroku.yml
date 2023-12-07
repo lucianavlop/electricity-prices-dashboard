@@ -2,8 +2,5 @@ build:
     docker:
         web: Dockerfile
 
-env:
-    REACT_APP_API_URL: "https://elec-prices-9603b16ade4e.herokuapp.com/api/v1/price"
-
 run:
     web: ./entrypoint.sh
