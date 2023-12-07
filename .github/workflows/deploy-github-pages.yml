@@ -29,7 +29,7 @@ jobs:
 
             - name: Build and Extract Static Files
               run: |
-                  docker build --target builder -t react-app .
+                  docker build --build-arg REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} --target builder -t react-app .
                   id=$(docker create react-app)
                   docker cp $id:/app/build ./build
                   docker rm -v $id
