@@ -20,9 +20,7 @@ const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
     const { now, fromISO } = useDateTime()
     const [currentDate, setCurrentDate] = useState(now())
-    const [currentPrices, setPricesToday] = useState<
-        DailyPriceInfo | undefined
-    >()
+    const [pricesToday, setPricesToday] = useState<DailyPriceInfo | undefined>()
     const [pricesTomorrow, setPricesTomorrow] = useState<
         DailyPriceInfo | undefined
     >()
@@ -104,25 +102,25 @@ const DashboardContent: React.FC = () => {
 
     const currentPrice = useMemo(() => {
         return (
-            currentPrices?.prices.find(price => {
+            pricesToday?.prices.find(price => {
                 const priceDateTimeInMadrid = fromISO(price.dateTime)
 
                 return currentDate.hasSame(priceDateTimeInMadrid, "hour")
             }) ?? null
         )
-    }, [currentPrices?.prices, fromISO, currentDate])
+    }, [pricesToday?.prices, fromISO, currentDate])
 
     const minPriceToday = useMemo(() => {
-        if (!currentPrices) return null
-        const min = Math.min(...currentPrices.prices.map(price => price.price))
-        return currentPrices.prices.find(price => price.price === min) ?? null
-    }, [currentPrices])
+        if (!pricesToday) return null
+        const min = Math.min(...pricesToday.prices.map(price => price.price))
+        return pricesToday.prices.find(price => price.price === min) ?? null
+    }, [pricesToday])
 
     const maxPriceToday = useMemo(() => {
-        if (!currentPrices) return null
-        const max = Math.max(...currentPrices.prices.map(price => price.price))
-        return currentPrices.prices.find(price => price.price === max) ?? null
-    }, [currentPrices])
+        if (!pricesToday) return null
+        const max = Math.max(...pricesToday.prices.map(price => price.price))
+        return pricesToday.prices.find(price => price.price === max) ?? null
+    }, [pricesToday])
 
     const minPriceTomorrow = useMemo(() => {
         if (!pricesTomorrow) return null
@@ -139,7 +137,7 @@ const DashboardContent: React.FC = () => {
     const currentRatingText = useMemo(() => {
         const date = currentDate.toFormat("dd/MM")
 
-        switch (currentPrices?.dayRating) {
+        switch (pricesToday?.dayRating) {
             case DayRating.BAD:
                 return LL.CURRENT_RATING_BAD({
                     currentDate: date,
@@ -153,7 +151,7 @@ const DashboardContent: React.FC = () => {
                     currentDate: date,
                 })
         }
-    }, [currentPrices, currentDate, LL])
+    }, [pricesToday, currentDate, LL])
 
     const tomorrowRatingText = useMemo(() => {
         if (!pricesTomorrow || pricesTomorrow.prices.length === 0)
@@ -289,15 +287,15 @@ const DashboardContent: React.FC = () => {
                 </Container>
 
                 <Container sx={{ p: 2, height: "400px" }}>
-                    {currentPrices && (
+                    {pricesToday && (
                         <PriceChart
-                            prices={currentPrices.prices}
+                            prices={pricesToday.prices}
                             average={average}
                             chartId="Today"
                             dateFormat="HH:mm"
                             showCurrentPrice={isToday}
-                            cheapestPeriods={currentPrices.cheapestPeriods}
-                            expensivePeriods={currentPrices.expensivePeriods}
+                            cheapestPeriods={pricesToday.cheapestPeriods}
+                            expensivePeriods={pricesToday.expensivePeriods}
                         />
                     )}
                 </Container>
