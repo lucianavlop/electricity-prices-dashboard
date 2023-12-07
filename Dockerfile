@@ -13,6 +13,7 @@ COPY ./tsconfig.json tsconfig.json
 
 # Set the build argument
 ARG REACT_APP_API_URL
+RUN echo "Build argument REACT_APP_API_URL is: $REACT_APP_API_URL"
 
 # Set the environment variable to the value of the build argument
 ENV REACT_APP_API_URL=${REACT_APP_API_URL}
