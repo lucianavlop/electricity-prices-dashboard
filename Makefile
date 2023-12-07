@@ -5,5 +5,9 @@ start: #@ Start local
 	yarn start
 build: #@ Build local
 	yarn build
-image: #@ Build docker image
-	docker build -t electricity-prices-dashboard . --load
+.PHONY:build
+
+docker-up: #@ Start docker
+	docker compose up --build -d
+docker-down: #@ Stop docker
+	docker compose down

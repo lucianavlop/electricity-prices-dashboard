@@ -2,7 +2,11 @@ version: "3.5"
 
 services:
     electricity-prices-dashboard:
-        image: electricity-prices-dashboard
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - REACT_APP_API_URL=https://elec-api.daithiapp.com/api/v1/price
         container_name: electricity-prices-dashboard
         restart: always
         environment:
