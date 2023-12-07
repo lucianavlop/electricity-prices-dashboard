@@ -1,6 +1,8 @@
 build:
     docker:
         web: Dockerfile
+    config:
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
 
 run:
     web: ./entrypoint.sh
