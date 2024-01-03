@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
 import PriceChart from "components/PriceChart"
 import { getDailyPriceInfo, getDailyAverages } from "services/PriceService"
-import { Container, Grid } from "@mui/material"
-import Metric from "components/Metric"
+import { Container } from "@mui/material"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { DayRating } from "models/DayRating"
 import { useI18nContext } from "i18n/i18n-react"
@@ -15,6 +14,8 @@ import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon"
 import { DateTime } from "luxon"
 import { DailyAverage } from "models/DailyAverage"
 import DailyAverageChart from "components/DailyAverageChart"
+import DailyInfo from "components/DailyInfo"
+import WithLoading from "components/WithLoading"
 
 const DashboardContent: React.FC = () => {
     const { LL } = useI18nContext()
@@ -26,12 +27,22 @@ const DashboardContent: React.FC = () => {
     >()
     const [dailyAverages, setDailyAverages] = useState<DailyAverage[]>([])
 
+    const [isLoading, setLoading] = useState(true)
+
+    const reloadData = useCallback(
+        (date?: DateTime<boolean>) => {
+            setLoading(true)
+            setCurrentDate(date ?? now())
+        },
+        [now, setLoading],
+    )
+
     useEffect(() => {
-        const fetchData = async () => {
-            const prices = await getDailyPriceInfo(currentDate)
-            if (prices) setPricesToday(prices)
-        }
-        fetchData()
+        getDailyPriceInfo(currentDate)
+            .then(prices => {
+                if (prices) setPricesToday(prices)
+            })
+            .finally(() => setTimeout(() => setLoading(false), 300))
     }, [currentDate])
 
     useEffect(() => {
@@ -58,7 +69,7 @@ const DashboardContent: React.FC = () => {
     }, [currentDate])
 
     useEffect(() => {
-        const fetchData = () => setCurrentDate(now())
+        const fetchData = () => reloadData()
         // Calculate time remaining until the start of the next hour
         const currTime = now()
         const nextHour = currTime.startOf("hour").plus({ hour: 1 })
@@ -84,7 +95,7 @@ const DashboardContent: React.FC = () => {
         return () => {
             clearTimeout(timeoutId)
         }
-    }, [now])
+    }, [reloadData, now])
 
     const isToday = useMemo(
         () => currentDate.hasSame(now(), "day"),
@@ -99,40 +110,6 @@ const DashboardContent: React.FC = () => {
             ) / dailyAverages.length
         )
     }, [dailyAverages])
-
-    const currentPrice = useMemo(() => {
-        return (
-            pricesToday?.prices.find(price => {
-                const priceDateTimeInMadrid = fromISO(price.dateTime)
-
-                return currentDate.hasSame(priceDateTimeInMadrid, "hour")
-            }) ?? null
-        )
-    }, [pricesToday?.prices, fromISO, currentDate])
-
-    const minPriceToday = useMemo(() => {
-        if (!pricesToday) return null
-        const min = Math.min(...pricesToday.prices.map(price => price.price))
-        return pricesToday.prices.find(price => price.price === min) ?? null
-    }, [pricesToday])
-
-    const maxPriceToday = useMemo(() => {
-        if (!pricesToday) return null
-        const max = Math.max(...pricesToday.prices.map(price => price.price))
-        return pricesToday.prices.find(price => price.price === max) ?? null
-    }, [pricesToday])
-
-    const minPriceTomorrow = useMemo(() => {
-        if (!pricesTomorrow) return null
-        const min = Math.min(...pricesTomorrow.prices.map(price => price.price))
-        return pricesTomorrow.prices.find(price => price.price === min) ?? null
-    }, [pricesTomorrow])
-
-    const maxPriceTomorrow = useMemo(() => {
-        if (!pricesTomorrow) return null
-        const max = Math.max(...pricesTomorrow.prices.map(price => price.price))
-        return pricesTomorrow.prices.find(price => price.price === max) ?? null
-    }, [pricesTomorrow])
 
     const currentRatingText = useMemo(() => {
         const date = currentDate.toFormat("dd/MM")
@@ -179,221 +156,135 @@ const DashboardContent: React.FC = () => {
 
     const handleDateChange = (date: DateTime | null) => {
         if (date) {
-            setCurrentDate(date)
+            reloadData(date)
         }
     }
 
     return (
-        <Box
-            component="main"
-            sx={{
-                flexGrow: 1,
-                height: "100vh",
-                overflow: "auto",
-            }}>
-            <Paper
+        <WithLoading isLoading={isLoading}>
+            <Box
+                component="main"
                 sx={{
-                    p: 1,
-                    display: "flex",
-                    flexDirection: "column",
+                    flexGrow: 1,
+                    height: "100vh",
+                    overflow: "auto",
                 }}>
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h1"
-                        component="h1"
-                        align="left"
-                        gutterBottom>
-                        {LL.TITLE()}
-                    </Typography>
-                </Container>
-
-                <Container sx={{ p: 2 }}>
-                    <LocalizationProvider dateAdapter={AdapterLuxon}>
-                        <DatePicker
-                            value={currentDate}
-                            onChange={handleDateChange}
-                            maxDate={now()}
-                            format="dd/MM/yyyy"
-                        />
-                    </LocalizationProvider>
-                </Container>
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        {currentRatingText}
-                    </Typography>
-                </Container>
-
-                <Container sx={{ p: 2 }}>
-                    <Grid container spacing={3}>
-                        {isToday && (
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={LL.CURRENT_PRICE({
-                                        currentTime:
-                                            currentDate.toFormat("HH:mm"),
-                                    })}
-                                    value={currentPrice?.price ?? 0}
-                                    delta={
-                                        currentPrice
-                                            ? average - currentPrice.price
-                                            : 0
-                                    }
-                                />
-                            </Grid>
-                        )}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={LL.MIN_PRICE({
-                                    minPrice: minPriceToday
-                                        ? fromISO(
-                                              minPriceToday.dateTime,
-                                          ).toFormat("HH:mm")
-                                        : "",
-                                })}
-                                value={minPriceToday ? minPriceToday.price : 0}
-                                delta={
-                                    average -
-                                    (minPriceToday ? minPriceToday.price : 0)
-                                }
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={LL.MAX_PRICE({
-                                    maxPrice: maxPriceToday
-                                        ? fromISO(
-                                              maxPriceToday.dateTime,
-                                          ).toFormat("HH:mm")
-                                        : "",
-                                })}
-                                value={maxPriceToday ? maxPriceToday.price : 0}
-                                delta={
-                                    average -
-                                    (maxPriceToday ? maxPriceToday.price : 0)
-                                }
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={LL.THIRTY_DAY_AVG()}
-                                value={average}
-                            />
-                        </Grid>
-                    </Grid>
-                </Container>
-
-                <Container sx={{ p: 2, height: "400px" }}>
-                    {pricesToday && (
-                        <PriceChart
-                            prices={pricesToday.prices}
-                            average={average}
-                            chartId="Today"
-                            dateFormat="HH:mm"
-                            showCurrentPrice={isToday}
-                            cheapestPeriods={pricesToday.cheapestPeriods}
-                            expensivePeriods={pricesToday.expensivePeriods}
-                        />
-                    )}
-                </Container>
-
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        {tomorrowRatingText}
-                    </Typography>
-                </Container>
-
-                {minPriceTomorrow && maxPriceTomorrow && (
+                <Paper
+                    sx={{
+                        p: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                    }}>
                     <Container sx={{ p: 2 }}>
-                        <Grid container spacing={3} direction="row">
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={LL.MIN_PRICE({
-                                        minPrice: minPriceTomorrow
-                                            ? fromISO(
-                                                  minPriceTomorrow.dateTime,
-                                              ).toFormat("HH:mm")
-                                            : "",
-                                    })}
-                                    value={
-                                        minPriceTomorrow
-                                            ? minPriceTomorrow.price
-                                            : 0
-                                    }
-                                    delta={
-                                        average -
-                                        (minPriceTomorrow
-                                            ? minPriceTomorrow.price
-                                            : 0)
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={LL.MAX_PRICE({
-                                        maxPrice: maxPriceTomorrow
-                                            ? fromISO(
-                                                  maxPriceTomorrow.dateTime,
-                                              ).toFormat("HH:mm")
-                                            : "",
-                                    })}
-                                    value={
-                                        maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0
-                                    }
-                                    delta={
-                                        average -
-                                        (maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0)
-                                    }
-                                />
-                            </Grid>
-                        </Grid>
+                        <Typography
+                            variant="h1"
+                            component="h1"
+                            align="left"
+                            gutterBottom>
+                            {LL.TITLE()}
+                        </Typography>
                     </Container>
-                )}
 
-                {pricesTomorrow && (
+                    <Container sx={{ p: 2 }}>
+                        <LocalizationProvider dateAdapter={AdapterLuxon}>
+                            <DatePicker
+                                value={currentDate}
+                                onChange={handleDateChange}
+                                maxDate={now()}
+                                format="dd/MM/yyyy"
+                            />
+                        </LocalizationProvider>
+                    </Container>
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {currentRatingText}
+                        </Typography>
+                    </Container>
+
+                    <Container sx={{ p: 2 }}>
+                        {pricesToday && (
+                            <DailyInfo
+                                dailyInfo={pricesToday}
+                                thirtyDayAverage={average}
+                            />
+                        )}
+                    </Container>
+
                     <Container sx={{ p: 2, height: "400px" }}>
-                        <PriceChart
-                            prices={pricesTomorrow.prices}
+                        {pricesToday && (
+                            <PriceChart
+                                prices={pricesToday.prices}
+                                average={average}
+                                chartId="Today"
+                                dateFormat="HH:mm"
+                                showCurrentPrice={isToday}
+                                cheapestPeriods={pricesToday.cheapestPeriods}
+                                expensivePeriods={pricesToday.expensivePeriods}
+                            />
+                        )}
+                    </Container>
+
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {tomorrowRatingText}
+                        </Typography>
+                    </Container>
+
+                    {pricesTomorrow && (
+                        <>
+                            <Container sx={{ p: 2 }}>
+                                <DailyInfo
+                                    dailyInfo={pricesTomorrow}
+                                    thirtyDayAverage={average}
+                                />
+                            </Container>
+
+                            <Container sx={{ p: 2, height: "400px" }}>
+                                <PriceChart
+                                    prices={pricesTomorrow.prices}
+                                    average={average}
+                                    chartId="Tomorrow"
+                                    dateFormat="HH:mm"
+                                    showCurrentPrice={true}
+                                    cheapestPeriods={
+                                        pricesTomorrow.cheapestPeriods
+                                    }
+                                    expensivePeriods={
+                                        pricesTomorrow.expensivePeriods
+                                    }
+                                />
+                            </Container>
+                        </>
+                    )}
+
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {LL.LAST_THIRTY_DAYS()}
+                        </Typography>
+                    </Container>
+                    <Container sx={{ p: 2, height: "400px" }}>
+                        <DailyAverageChart
+                            averages={dailyAverages}
                             average={average}
-                            chartId="Tomorrow"
-                            dateFormat="HH:mm"
-                            showCurrentPrice={true}
-                            cheapestPeriods={pricesTomorrow.cheapestPeriods}
-                            expensivePeriods={pricesTomorrow.expensivePeriods}
+                            chartId="DailyAverages"
+                            dateFormat="MMM dd"
                         />
                     </Container>
-                )}
-
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        {LL.LAST_THIRTY_DAYS()}
-                    </Typography>
-                </Container>
-                <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyAverageChart
-                        averages={dailyAverages}
-                        average={average}
-                        chartId="DailyAverages"
-                        dateFormat="MMM dd"
-                    />
-                </Container>
-            </Paper>
-        </Box>
+                </Paper>
+            </Box>
+        </WithLoading>
     )
 }
 
