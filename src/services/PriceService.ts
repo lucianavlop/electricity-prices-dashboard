@@ -3,10 +3,14 @@ import { DateTime } from "luxon"
 import { DailyPriceInfo } from "models/DailyPriceInfo"
 import { DailyAverage } from "models/DailyAverage"
 
-const PRICES_API =
-    process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.trim() !== ""
-        ? process.env.REACT_APP_API_URL
-        : "https://elec-api.daithiapp.com/api/v1/price"
+if (
+    !process.env.REACT_APP_API_URL ||
+    process.env.REACT_APP_API_URL.trim() === ""
+) {
+    throw new Error("REACT_APP_API_URL environment variable is not set")
+}
+
+const PRICES_API = process.env.REACT_APP_API_URL.trim()
 
 export const getDailyPriceInfo = async (
     date: DateTime,
