@@ -5,7 +5,7 @@
 
 ## Description
 
-[A dashboard to display the PVPC electricity prices for Spain](https://preciosdelaelectricidad.es/).
+[A dashboard to display the PVPC electricity prices for Spain](https://preciosdelaelectricidad.es/). A docker image for this can also be found on [docker hub](https://hub.docker.com/repository/docker/daithihearn/electricity-prices-dashboard/general).
 
 ## Stack
 
