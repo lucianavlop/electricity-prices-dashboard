@@ -6,7 +6,7 @@ on:
 
 jobs:
     publish:
-        name: Build and Publish docker image to dockerhub
+        name: Publish to dockerhub
         permissions:
             contents: write
             pull-requests: write
