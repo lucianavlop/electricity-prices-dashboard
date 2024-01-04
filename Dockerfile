@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package.json ./
 
-RUN yarn --network-timeout 100000
+RUN yarn --network-timeout 1000000
 
 COPY ./src ./src
 COPY ./public ./public
