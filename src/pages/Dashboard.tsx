@@ -1,70 +1,82 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
-import DailyChart from "components/PriceChart"
-import { Price } from "models/Price"
-import { format, isSameHour } from "date-fns"
-import { getPrices } from "services/PriceService"
-import { calculateAverage, calculateRating } from "utils/PriceUtils"
-import { Container, Grid } from "@mui/material"
-import Metric from "components/Metric"
+import PriceChart from "components/PriceChart"
+import { getDailyPriceInfo, getDailyAverages } from "services/PriceService"
+import { Container } from "@mui/material"
+import { DailyPriceInfo } from "models/DailyPriceInfo"
+import { DayRating } from "models/DayRating"
+import { useI18nContext } from "i18n/i18n-react"
+import { useDateTime } from "hooks/RegionalDateTime"
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
+import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon"
+import { DateTime } from "luxon"
+import { DailyAverage } from "models/DailyAverage"
+import DailyAverageChart from "components/DailyAverageChart"
+import DailyInfo from "components/DailyInfo"
+import WithLoading from "components/WithLoading"
 
 const DashboardContent: React.FC = () => {
-    const [currentDate, setCurrentDate] = useState(new Date())
-    const [pricesToday, setPricesToday] = useState<Price[]>([])
-    const [pricesTomorrow, setPricesTomorrow] = useState<Price[] | null>(null)
-    const [pricesThirtyDays, setPricesThirtyDays] = useState<Price[]>([])
+    const { LL } = useI18nContext()
+    const { now, fromISO } = useDateTime()
+    const [currentDate, setCurrentDate] = useState(now())
+    const [pricesToday, setPricesToday] = useState<DailyPriceInfo | undefined>()
+    const [pricesTomorrow, setPricesTomorrow] = useState<
+        DailyPriceInfo | undefined
+    >()
+    const [dailyAverages, setDailyAverages] = useState<DailyAverage[]>([])
+
+    const [isLoading, setLoading] = useState(true)
+
+    const reloadData = useCallback(
+        (date?: DateTime<boolean>) => {
+            setLoading(true)
+            setCurrentDate(date ?? now())
+        },
+        [now, setLoading],
+    )
 
     useEffect(() => {
-        const fetchData = async () => {
-            const prices = await getPrices(currentDate, currentDate)
-            if (prices.length === 0) return
-            setPricesToday(prices)
-        }
-        fetchData()
+        getDailyPriceInfo(currentDate)
+            .then(prices => {
+                if (prices) setPricesToday(prices)
+            })
+            .finally(() => setTimeout(() => setLoading(false), 300))
     }, [currentDate])
 
     useEffect(() => {
         const fetchData = async () => {
-            const tomorrow = new Date()
-            tomorrow.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000)
+            const tomorrow = now().plus({ days: 1 })
 
-            const prices = await getPrices(tomorrow, tomorrow)
-            if (prices.length === 0) {
-                setPricesTomorrow(null)
+            const prices = await getDailyPriceInfo(tomorrow)
+            if (prices === null) {
+                setPricesTomorrow(undefined)
             } else {
-                const last = prices[prices.length - 1]
-                prices.push({
-                    price: last.price,
-                    dateTime: last.dateTime.slice(0, -8) + "24:00:00",
-                })
                 setPricesTomorrow(prices)
             }
         }
         fetchData()
-    }, [currentDate])
+    }, [now])
 
     useEffect(() => {
         const fetchData = async () => {
-            const thirtyDaysAgo = new Date()
-            thirtyDaysAgo.setTime(
-                currentDate.getTime() - 30 * 24 * 60 * 60 * 1000,
-            )
+            const averages = await getDailyAverages(currentDate)
 
-            const prices = await getPrices(thirtyDaysAgo, currentDate)
-
-            setPricesThirtyDays(prices)
+            if (averages) setDailyAverages(averages)
         }
         fetchData()
     }, [currentDate])
 
     useEffect(() => {
-        const fetchData = () => setCurrentDate(new Date())
+        const fetchData = () => reloadData()
         // Calculate time remaining until the start of the next hour
-        const now = new Date()
-        const millisecondsUntilNextHour =
-            (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000
+        const currTime = now()
+        const nextHour = currTime.startOf("hour").plus({ hour: 1 })
+        const millisecondsUntilNextHour = nextHour.diff(
+            currTime,
+            "milliseconds",
+        ).milliseconds
 
         // Set a timeout to execute the function when the next hour starts
         const timeoutId = setTimeout(() => {
@@ -83,288 +95,196 @@ const DashboardContent: React.FC = () => {
         return () => {
             clearTimeout(timeoutId)
         }
-    }, [])
+    }, [reloadData, now])
 
-    const median = useMemo(
-        () => calculateAverage(pricesThirtyDays),
-        [pricesThirtyDays],
+    const isToday = useMemo(
+        () => currentDate.hasSame(now(), "day"),
+        [currentDate, now],
     )
 
-    const currentPrice = useMemo(
-        () =>
-            pricesToday.find(price =>
-                isSameHour(new Date(price.dateTime), currentDate),
-            ),
+    const average = useMemo(() => {
+        return (
+            dailyAverages.reduce(
+                (accumulator, med) => accumulator + med.average,
+                0,
+            ) / dailyAverages.length
+        )
+    }, [dailyAverages])
 
-        [pricesToday, currentDate],
-    )
+    const currentRatingText = useMemo(() => {
+        const date = currentDate.toFormat("dd/MM")
 
-    const minPriceToday = useMemo(() => {
-        const min = Math.min(...pricesToday.map(price => price.price))
-        return pricesToday.find(price => price.price === min)
-    }, [pricesToday])
-
-    const maxPriceToday = useMemo(() => {
-        const max = Math.max(...pricesToday.map(price => price.price))
-        return pricesToday.find(price => price.price === max)
-    }, [pricesToday])
-
-    const minPriceTomorrow = useMemo(() => {
-        if (!pricesTomorrow) return null
-        const min = Math.min(...pricesTomorrow.map(price => price.price))
-        return pricesTomorrow.find(price => price.price === min)
-    }, [pricesTomorrow])
-
-    const maxPriceTomorrow = useMemo(() => {
-        if (!pricesTomorrow) return null
-        const max = Math.max(...pricesTomorrow.map(price => price.price))
-        return pricesTomorrow.find(price => price.price === max)
-    }, [pricesTomorrow])
-
-    const dailyMedians = useMemo(() => {
-        const medians: Price[] = []
-
-        if (pricesThirtyDays.length % 24 !== 0)
-            throw Error(
-                `Expected prices to be a multiple of 24 but got ${pricesThirtyDays.length}`,
-            )
-
-        for (let i = 0; i < pricesThirtyDays.length; i = i + 24) {
-            const prices = pricesThirtyDays.slice(i, i + 24)
-            const median = calculateAverage(prices)
-            medians.push({ price: median, dateTime: prices[0].dateTime })
+        switch (pricesToday?.dayRating) {
+            case DayRating.BAD:
+                return LL.CURRENT_RATING_BAD({
+                    currentDate: date,
+                })
+            case DayRating.GOOD:
+                return LL.CURRENT_RATING_GOOD({
+                    currentDate: date,
+                })
+            default:
+                return LL.CURRENT_RATING_NORMAL({
+                    currentDate: date,
+                })
         }
+    }, [pricesToday, currentDate, LL])
 
-        return medians
-    }, [pricesThirtyDays])
+    const tomorrowRatingText = useMemo(() => {
+        if (!pricesTomorrow || pricesTomorrow.prices.length === 0)
+            return LL.TOMORROW_NO_DATA()
 
-    const todayRating = useMemo(
-        () => calculateRating(pricesToday, median),
-        [pricesToday, median],
-    )
+        const date = fromISO(pricesTomorrow.prices[0].dateTime).toFormat(
+            "dd/MM",
+        )
 
-    const tomorrowRating = useMemo(
-        () => (pricesTomorrow ? calculateRating(pricesTomorrow, median) : null),
-        [pricesTomorrow, median],
-    )
+        switch (pricesTomorrow?.dayRating) {
+            case DayRating.BAD:
+                return LL.TOMORROW_RATING_BAD({
+                    currentDate: date,
+                })
+            case DayRating.GOOD:
+                return LL.TOMORROW_RATING_GOOD({
+                    currentDate: date,
+                })
+            default:
+                return LL.TOMORROW_RATING_NORMAL({
+                    currentDate: date,
+                })
+        }
+    }, [pricesTomorrow, LL, fromISO])
+
+    const handleDateChange = (date: DateTime | null) => {
+        if (date) {
+            reloadData(date)
+        }
+    }
 
     return (
-        <Box
-            component="main"
-            sx={{
-                flexGrow: 1,
-                height: "100vh",
-                overflow: "auto",
-            }}>
-            <Paper
+        <WithLoading isLoading={isLoading}>
+            <Box
+                component="main"
                 sx={{
-                    p: 1,
-                    display: "flex",
-                    flexDirection: "column",
+                    flexGrow: 1,
+                    height: "100vh",
+                    overflow: "auto",
                 }}>
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h1"
-                        component="h1"
-                        align="left"
-                        gutterBottom>
-                        Precios de la electricidad
-                    </Typography>
-
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        Hoy{" "}
-                        {pricesToday.length > 0
-                            ? format(new Date(pricesToday[0].dateTime), "dd/MM")
-                            : ""}{" "}
-                        es un día {todayRating}
-                    </Typography>
-                </Container>
-
-                <Container sx={{ p: 2 }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6} md={3}>
-                            {currentPrice ? (
-                                <Metric
-                                    label={`Precio actual - ${format(
-                                        currentDate,
-                                        "HH:mm",
-                                    )}`}
-                                    value={currentPrice.price}
-                                    delta={median - currentPrice.price}
-                                />
-                            ) : (
-                                <Metric label="Precio actual" value={0} />
-                            )}
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={`Precio min - ${
-                                    minPriceToday
-                                        ? format(
-                                              new Date(minPriceToday.dateTime),
-                                              "HH:mm",
-                                          )
-                                        : ""
-                                }`}
-                                value={minPriceToday ? minPriceToday.price : 0}
-                                delta={
-                                    median -
-                                    (minPriceToday ? minPriceToday.price : 0)
-                                }
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label={`Precio max - ${
-                                    maxPriceToday
-                                        ? format(
-                                              new Date(maxPriceToday.dateTime),
-                                              "HH:mm",
-                                          )
-                                        : ""
-                                }`}
-                                value={maxPriceToday ? maxPriceToday.price : 0}
-                                delta={
-                                    median -
-                                    (maxPriceToday ? maxPriceToday.price : 0)
-                                }
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Metric
-                                label="Precio Promedio (30 días)"
-                                value={median}
-                            />
-                        </Grid>
-                    </Grid>
-                </Container>
-
-                <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyChart
-                        prices={pricesToday}
-                        median={median}
-                        chartId="Today"
-                        dateFormat="HH:mm"
-                        showCurrentPrice={true}
-                        showCheapPeriod={true}
-                        showExpensivePeriod={true}
-                    />
-                </Container>
-
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        {pricesTomorrow &&
-                        tomorrowRating &&
-                        pricesTomorrow.length > 0
-                            ? `Mañana ${format(
-                                  new Date(pricesTomorrow[0].dateTime),
-                                  "dd/MM",
-                              )} es un día ${tomorrowRating}`
-                            : `Los precios de mañana aún no están disponibles - approx. 20:30`}
-                    </Typography>
-                </Container>
-
-                {minPriceTomorrow && maxPriceTomorrow && (
+                <Paper
+                    sx={{
+                        p: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                    }}>
                     <Container sx={{ p: 2 }}>
-                        <Grid container spacing={3} direction="row-reverse">
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={`Precio max - ${
-                                        maxPriceTomorrow
-                                            ? format(
-                                                  new Date(
-                                                      maxPriceTomorrow.dateTime,
-                                                  ),
-                                                  "HH:mm",
-                                              )
-                                            : ""
-                                    }`}
-                                    value={
-                                        maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0
-                                    }
-                                    delta={
-                                        median -
-                                        (maxPriceTomorrow
-                                            ? maxPriceTomorrow.price
-                                            : 0)
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Metric
-                                    label={`Precio min - ${
-                                        minPriceTomorrow
-                                            ? format(
-                                                  new Date(
-                                                      minPriceTomorrow.dateTime,
-                                                  ),
-                                                  "HH:mm",
-                                              )
-                                            : ""
-                                    }`}
-                                    value={
-                                        minPriceTomorrow
-                                            ? minPriceTomorrow.price
-                                            : 0
-                                    }
-                                    delta={
-                                        median -
-                                        (minPriceTomorrow
-                                            ? minPriceTomorrow.price
-                                            : 0)
-                                    }
-                                />
-                            </Grid>
-                        </Grid>
+                        <Typography
+                            variant="h1"
+                            component="h1"
+                            align="left"
+                            gutterBottom>
+                            {LL.TITLE()}
+                        </Typography>
                     </Container>
-                )}
 
-                {pricesTomorrow && (
+                    <Container sx={{ p: 2 }}>
+                        <LocalizationProvider dateAdapter={AdapterLuxon}>
+                            <DatePicker
+                                value={currentDate}
+                                onChange={handleDateChange}
+                                maxDate={now()}
+                                format="dd/MM/yyyy"
+                            />
+                        </LocalizationProvider>
+                    </Container>
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {currentRatingText}
+                        </Typography>
+                    </Container>
+
+                    <Container sx={{ p: 2 }}>
+                        {pricesToday && (
+                            <DailyInfo
+                                dailyInfo={pricesToday}
+                                thirtyDayAverage={average}
+                            />
+                        )}
+                    </Container>
+
                     <Container sx={{ p: 2, height: "400px" }}>
-                        <DailyChart
-                            prices={pricesTomorrow}
-                            median={median}
-                            chartId="Tomorrow"
-                            dateFormat="HH:mm"
-                            showCurrentPrice={true}
-                            showCheapPeriod={true}
-                            showExpensivePeriod={true}
+                        {pricesToday && (
+                            <PriceChart
+                                prices={pricesToday.prices}
+                                average={average}
+                                chartId="Today"
+                                dateFormat="HH:mm"
+                                showCurrentPrice={isToday}
+                                cheapestPeriods={pricesToday.cheapestPeriods}
+                                expensivePeriods={pricesToday.expensivePeriods}
+                            />
+                        )}
+                    </Container>
+
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {tomorrowRatingText}
+                        </Typography>
+                    </Container>
+
+                    {pricesTomorrow && (
+                        <>
+                            <Container sx={{ p: 2 }}>
+                                <DailyInfo
+                                    dailyInfo={pricesTomorrow}
+                                    thirtyDayAverage={average}
+                                />
+                            </Container>
+
+                            <Container sx={{ p: 2, height: "400px" }}>
+                                <PriceChart
+                                    prices={pricesTomorrow.prices}
+                                    average={average}
+                                    chartId="Tomorrow"
+                                    dateFormat="HH:mm"
+                                    showCurrentPrice={true}
+                                    cheapestPeriods={
+                                        pricesTomorrow.cheapestPeriods
+                                    }
+                                    expensivePeriods={
+                                        pricesTomorrow.expensivePeriods
+                                    }
+                                />
+                            </Container>
+                        </>
+                    )}
+
+                    <Container sx={{ p: 2 }}>
+                        <Typography
+                            variant="h2"
+                            component="h2"
+                            align="left"
+                            gutterBottom>
+                            {LL.LAST_THIRTY_DAYS()}
+                        </Typography>
+                    </Container>
+                    <Container sx={{ p: 2, height: "400px" }}>
+                        <DailyAverageChart
+                            averages={dailyAverages}
+                            average={average}
+                            chartId="DailyAverages"
+                            dateFormat="MMM dd"
                         />
                     </Container>
-                )}
-
-                <Container sx={{ p: 2 }}>
-                    <Typography
-                        variant="h2"
-                        component="h2"
-                        align="left"
-                        gutterBottom>
-                        Últimos 30 días
-                    </Typography>
-                </Container>
-                <Container sx={{ p: 2, height: "400px" }}>
-                    <DailyChart
-                        prices={dailyMedians}
-                        median={median}
-                        chartId="DailyMedians"
-                        dateFormat="MMM dd"
-                        showCurrentPrice={false}
-                        showCheapPeriod={false}
-                        showExpensivePeriod={false}
-                    />
-                </Container>
-            </Paper>
-        </Box>
+                </Paper>
+            </Box>
+        </WithLoading>
     )
 }
 

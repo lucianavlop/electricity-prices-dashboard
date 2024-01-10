@@ -1,0 +1,43 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v1
+
+            - name: Cache Docker layers
+              uses: actions/cache@v1
+              with:
+                  path: /tmp/.buildx-cache
+                  key: ${{ runner.os }}-buildx-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-buildx-
+
+            - name: Build and Extract Static Files
+              run: |
+                  docker build --build-arg REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} --target builder -t react-app .
+                  id=$(docker create react-app)
+                  docker cp $id:/app/build ./build
+                  docker rm -v $id
+
+            - name: Create CNAME File
+              run: echo '${{ secrets.CNAME }}' > ./build/CNAME
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./build

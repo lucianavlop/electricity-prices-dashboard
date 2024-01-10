@@ -1,22 +1,61 @@
 import axios from "axios"
-import { format } from "date-fns"
-import { Price } from "models/Price"
+import { DateTime } from "luxon"
+import { DailyPriceInfo } from "models/DailyPriceInfo"
+import { DailyAverage } from "models/DailyAverage"
 
-const PRICES_API = "https://elec-api.daithiapp.com/api/v1/price"
-
-export const getPricesXDaysAgo = async (x: number): Promise<Price[]> => {
-    const today = new Date()
-    const xDaysAgo = new Date()
-    xDaysAgo.setTime(today.getTime() - x * 24 * 60 * 60 * 1000)
-    return getPrices(xDaysAgo, xDaysAgo)
+if (
+    !process.env.REACT_APP_API_URL ||
+    process.env.REACT_APP_API_URL.trim() === ""
+) {
+    throw new Error("REACT_APP_API_URL environment variable is not set")
 }
 
-export const getPrices = async (start: Date, end: Date): Promise<Price[]> => {
-    const start_day = format(start, "yyyy-MM-dd")
-    const end_day = format(end, "yyyy-MM-dd")
+const PRICES_API = process.env.REACT_APP_API_URL.trim()
 
-    const response = await axios.get<Price[]>(
-        `${PRICES_API}?start=${start_day}&end=${end_day}`,
-    )
-    return response.data
+export const getDailyPriceInfo = async (
+    date: DateTime,
+): Promise<DailyPriceInfo | null> => {
+    const dateStr = date.toFormat("yyyy-MM-dd")
+
+    try {
+        const response = await axios.get<DailyPriceInfo>(
+            `${PRICES_API}/dailyinfo?date=${dateStr}`,
+        )
+        return response.data
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+                console.error("Resource not found.")
+            } else {
+                console.error(`An error occurred: ${error.response?.status}`)
+            }
+        } else {
+            console.error("An unknown error occurred.")
+        }
+        return null
+    }
+}
+
+export const getDailyAverages = async (
+    date: DateTime,
+): Promise<DailyAverage[] | null> => {
+    const dateStr = date.toFormat("yyyy-MM-dd")
+
+    try {
+        const response = await axios.get<DailyAverage[]>(
+            `${PRICES_API}/averages?date=${dateStr}`,
+        )
+        return response.data
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+                console.error("Resource not found.")
+            } else {
+                console.error(`An error occurred: ${error.response?.status}`)
+            }
+        } else {
+            console.error("An unknown error occurred.")
+        }
+        return null
+    }
 }

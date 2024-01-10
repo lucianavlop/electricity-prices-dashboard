@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { filterAndPadPrices, getMostExpensivePeriod, getTwoCheapestPeriods } from "utils/PriceUtils"
-import { format } from "date-fns"
 import { Chart, ChartData, ChartOptions } from "chart.js/auto"
 import Annotation, { LineAnnotationOptions } from "chartjs-plugin-annotation"
 import { Price } from "models/Price"
 import { useTheme } from "@mui/material/styles"
+import { padPrices } from "utils/PriceUtils"
+import { useI18nContext } from "i18n/i18n-react"
+import { useDateTime } from "hooks/RegionalDateTime"
 
 Chart.register(Annotation)
 
@@ -18,25 +19,27 @@ const hexToRGBA = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export interface DailyChartProps {
+export interface PriceChartProps {
     prices: Price[]
-    median: number
+    average: number
     chartId: string
     dateFormat: string
     showCurrentPrice: boolean
-    showCheapPeriod: boolean
-    showExpensivePeriod: boolean
+    cheapestPeriods: Price[][]
+    expensivePeriods: Price[][]
 }
 
-const DailyChart: React.FC<DailyChartProps> = ({
+const PriceChart: React.FC<PriceChartProps> = ({
     prices,
-    median,
+    average,
     chartId,
     dateFormat,
     showCurrentPrice,
-    showCheapPeriod,
-    showExpensivePeriod,
+    cheapestPeriods,
+    expensivePeriods,
 }) => {
+    const { LL } = useI18nContext()
+    const { now, fromISO, endOfDay } = useDateTime()
     const theme = useTheme()
     const [currentPriceLocation, setCurrentPriceLocation] = useState(-1)
     const chartRef = useRef<Chart | null>(null)
@@ -46,12 +49,15 @@ const DailyChart: React.FC<DailyChartProps> = ({
         // Function to be executed every minute
         const updateData = () => {
             if (!showCurrentPrice || prices.length <= 1) return
+
             const canvasWidth = prices.length - 1
-            const startTime = new Date(prices[0].dateTime).getTime()
-            const endTime = new Date(
+
+            // Use Luxon's DateTime objects with Europe/Madrid timezone
+            const startTime = fromISO(prices[0].dateTime).toMillis()
+            const endTime = fromISO(
                 prices[prices.length - 1].dateTime,
-            ).getTime()
-            const currentTime = new Date().getTime()
+            ).toMillis()
+            const currentTime = now().toMillis()
 
             if (currentTime < startTime || currentTime > endTime)
                 return setCurrentPriceLocation(-1)
@@ -72,7 +78,7 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return () => {
             clearInterval(intervalId)
         }
-    }, [prices, showCurrentPrice])
+    }, [fromISO, now, prices, showCurrentPrice])
 
     const chartOptions = useMemo(() => {
         const chartOptions: ChartOptions = {
@@ -161,120 +167,117 @@ const DailyChart: React.FC<DailyChartProps> = ({
         return chartOptions
     }, [currentPriceLocation, theme])
 
-    const cheapPeriods = useMemo(() => {
-        if (!showCheapPeriod || prices.length <= 1) return [[], []]
+    const cheapestPeriodsPadded = useMemo(
+        () => cheapestPeriods.map(period => padPrices(period)),
+        [cheapestPeriods],
+    )
 
-        const cp = getTwoCheapestPeriods(prices, 3)
+    const expensivePeriodsPadded = useMemo(
+        () => expensivePeriods.map(period => padPrices(period)),
 
-        return [
-            filterAndPadPrices(cp[0]),
-            filterAndPadPrices(cp[1]),
-        ]
-    }, [prices, showCheapPeriod])
-
-    const expensivePeriod = useMemo(() => {
-        if (!showExpensivePeriod) return []
-
-        const ep = getMostExpensivePeriod(prices, 3)
-        return filterAndPadPrices(ep)
-    }, [prices, showExpensivePeriod])
+        [expensivePeriods],
+    )
 
     const paddedPrices = useMemo(() => {
         if (prices.length === 0) return []
+        if (prices.length > 24) return prices
         const last = prices[prices.length - 1]
         const pp = [...prices]
-        pp.push({
-            price: last.price,
-            dateTime: last.dateTime.slice(0, -8) + "24:00:00",
-        })
+        const eod = endOfDay(last.dateTime).toISO()
+        if (eod) {
+            pp.push({
+                price: last.price,
+                dateTime: eod,
+            })
+        }
         return pp
-    }, [prices])
+    }, [endOfDay, prices])
 
     const averageDataset = useMemo(
-        () => Array<number>(paddedPrices.length).fill(median),
-        [paddedPrices, median],
+        () => Array<number>(paddedPrices.length).fill(average),
+        [paddedPrices, average],
     )
 
     const chartData: ChartData<"line", (number | null)[]> = useMemo(() => {
+        const datasets = []
+
+        cheapestPeriodsPadded.forEach((period, index) => {
+            datasets.push(
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+            )
+        })
+
+        expensivePeriodsPadded.forEach((period, index) => {
+            datasets.push(
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
+                    showLine: false,
+                    fill: "start",
+                    pointRadius: 0,
+                },
+                {
+                    label: "Hide",
+                    data: period,
+                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
+                    showLine: false,
+                    fill: "end",
+                    pointRadius: 0,
+                },
+            )
+        })
+
+        datasets.push(
+            {
+                label: LL.PRICE(),
+                data: paddedPrices.map(item => item.price),
+                borderColor: theme.palette.info.main,
+                backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
+                pointRadius: 0,
+            },
+            {
+                label: LL.THIRTY_DAY_AVG(),
+                data: averageDataset,
+                borderColor: theme.palette.secondary.main,
+                backgroundColor: hexToRGBA(theme.palette.secondary.main, 0.2),
+                pointRadius: 0,
+            },
+        )
+
         return {
             labels: paddedPrices.map(item =>
-                format(new Date(item.dateTime), dateFormat),
+                fromISO(item.dateTime).toFormat(dateFormat),
             ),
-            datasets: [
-                {
-                    label: "Hide",
-                    data: cheapPeriods[0],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapPeriods[0],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapPeriods[1],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: cheapPeriods[1],
-                    backgroundColor: hexToRGBA(theme.palette.success.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: expensivePeriod,
-                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
-                    showLine: false,
-                    fill: "start",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Hide",
-                    data: expensivePeriod,
-                    backgroundColor: hexToRGBA(theme.palette.error.main, 0.2),
-                    showLine: false,
-                    fill: "end",
-                    pointRadius: 0,
-                },
-                {
-                    label: "Precio",
-                    data: paddedPrices.map(item => item.price),
-                    borderColor: theme.palette.info.main,
-                    backgroundColor: hexToRGBA(theme.palette.info.main, 0.4),
-                    pointRadius: 0,
-                },
-                {
-                    label: "Precio Promedio (30 días)",
-                    data: averageDataset,
-                    borderColor: theme.palette.secondary.main,
-                    backgroundColor: hexToRGBA(
-                        theme.palette.secondary.main,
-                        0.2,
-                    ),
-                    pointRadius: 0,
-                },
-            ],
+            datasets: datasets,
         }
     }, [
-        averageDataset,
-        cheapPeriods,
-        dateFormat,
-        expensivePeriod,
         paddedPrices,
-        theme,
+        cheapestPeriodsPadded,
+        theme.palette.success.main,
+        theme.palette.error.main,
+        theme.palette.info.main,
+        theme.palette.secondary.main,
+        expensivePeriodsPadded,
+        LL,
+        averageDataset,
+        fromISO,
+        dateFormat,
     ])
 
     useEffect(() => {
@@ -304,4 +307,4 @@ const DailyChart: React.FC<DailyChartProps> = ({
     return <canvas id={ID_PREFIX + chartId} />
 }
 
-export default DailyChart
+export default PriceChart
